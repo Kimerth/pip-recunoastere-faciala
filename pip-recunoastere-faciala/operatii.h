@@ -1,10 +1,21 @@
 #pragma once
+#include "Image.hpp"
+#include <functional>
 
-unsigned char* negateImage(unsigned char* img, int w, int h)
+Image transformImage(const Image& img, std::function<uchar(uchar)> transform)
 {
-	unsigned char* result = new unsigned char[w*h];
-	for (int y = 0; y < h; y++)
-		for (int x = 0; x < w; x++)
-			result[y*w + x] = 255 - img[y*w + x];
-	return result;
+	Image ret(img.dims());
+
+	for (int y = 0; y < ret.height(); y++)
+		for (int x = 0; x < ret.width(); x++)
+			ret[y * ret.width() + x] = transform(img[y * ret.width() + x]);
+
+	return ret;
+}
+
+Image negateImage(const Image& img)
+{
+	return transformImage(img, [](auto b) {
+		return 255 - b;
+		});
 }

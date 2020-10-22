@@ -1,8 +1,85 @@
-#include "Tools.h"
+#include "Image.hpp"
+#include <Qimage>
 
-PITimer Tools::t = PITimer();
+Image::Image(const char* filename)
+{
+	QImage image(filename);
+	dim = Vec2(image.width(), image.height());
 
-QVector<QRgb> Tools::grayLUT =
+	img.resize(dim.x * dim.y);
+
+	for (int i = 0; i < dim.y; i++)
+		memcpy(img.data() + i * dim.x, image.scanLine(i), dim.x);
+}
+
+Image::Image(Vec2 dim) : dim(dim)
+{
+	img.resize(dim.x * dim.y);
+	
+	// TODO: maybe check if useful?
+	//memset(img.data(), 0, dim.x * dim.y * sizeof(uchar));
+}
+
+Image::Image(const Image& other)
+	: dim(other.dim)
+{
+	img.resize(other.dim.x * other.dim.y);
+	std::copy(other.img.cbegin(), other.img.cend(), img.begin());
+}
+
+Image& Image::operator=(const Image& other)
+{
+	dim = other.dim;
+	img.resize(other.dim.x * other.dim.y);
+
+	std::copy(other.img.cbegin(), other.img.cend(), img.begin());
+
+	return *this;
+}
+
+uchar& Image::operator[](int index)
+{
+	return img[index];
+}
+
+const uchar& Image::operator[](int index) const
+{
+	return img[index];
+}
+
+Vec2 Image::dims() const
+{
+	return dim;
+}
+
+const uchar* Image::get() const
+{
+	return img.data();
+}
+
+uchar* Image::get()
+{
+	return img.data();
+}
+
+int Image::width() const
+{
+	return dim.x;
+}
+
+int Image::height() const
+{
+	return dim.y;
+}
+
+std::shared_ptr<QImage> Image::get_qimage() const
+{
+	auto ret = std::make_shared<QImage>(img.data(), dim.x, dim.y, dim.x, QImage::Format_Indexed8);
+	ret->setColorTable(grayLUT);
+	return ret;
+}
+
+QVector<QRgb> Image::grayLUT =
 {
 	4278190080, 4278255873, 4278321666, 4278387459, 4278453252, 4278519045, 4278584838, 4278650631,
 	4278716424, 4278782217, 4278848010, 4278913803, 4278979596, 4279045389, 4279111182, 4279176975,

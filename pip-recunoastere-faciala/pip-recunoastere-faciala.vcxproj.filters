@@ -28,10 +28,13 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Tools.cpp">
+    <ClCompile Include="AbstractViewer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AbstractViewer.cpp">
+    <ClCompile Include="Vec2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -54,10 +57,13 @@
     <ClInclude Include="PITimer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Tools.h">
+    <ClInclude Include="AbstractViewer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AbstractViewer.h">
+    <ClInclude Include="Image.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vec2.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

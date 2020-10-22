@@ -13,21 +13,23 @@
   <ItemGroup>
     <ClCompile Include="AbstractViewer.cpp" />
     <ClCompile Include="HistogramViewer.cpp" />
+    <ClCompile Include="Image.cpp" />
     <ClCompile Include="ImageGrid.cpp" />
     <ClCompile Include="ImageGridCell.cpp" />
     <ClCompile Include="ImageViewer.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Tools.cpp" />
+    <ClCompile Include="Vec2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AbstractViewer.h" />
     <ClInclude Include="HistogramViewer.h" />
+    <ClInclude Include="Image.hpp" />
     <ClInclude Include="ImageGrid.h" />
     <ClInclude Include="ImageGridCell.h" />
     <ClInclude Include="ImageViewer.h" />
     <ClInclude Include="operatii.h" />
     <ClInclude Include="PITimer.h" />
-    <ClInclude Include="Tools.h" />
+    <ClInclude Include="Vec2.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{64A858C8-901C-49F3-9A86-62CBE49BD414}</ProjectGuid>
