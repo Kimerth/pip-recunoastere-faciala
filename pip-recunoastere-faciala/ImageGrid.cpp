@@ -13,24 +13,18 @@ ImageGrid::ImageGrid(QString title, QWidget *parent)
 	//setStyleSheet("border: 1px solid red;");
 }
 
-void ImageGrid::addImage(std::shared_ptr<QImage> image, int posX, int posY, QString title)
-{
-	ImageGridCell *cell = new ImageGridCell(this);
-	// TODO: pls fix
-	auto ptr = new QImage(*image);
-	cell->setImage(ptr, title);
-	layout->addWidget(cell, posX, posY);
-}
-
 void ImageGrid::addImage(const Image& image, Vec2 pos, QString title)
 {
-	addImage(image.get_qimage(), pos.x, pos.y, title);
+	ImageGridCell *cell = new ImageGridCell(this);
+	cell->setImage(image, title);
+	layout->addWidget(cell, pos.x, pos.y);
 }
 
 void ImageGrid::addImage(QString fileName, int posX, int posY, QString title)
 {
-	if (title == "") title = fileName;
-	addImage(std::make_shared<QImage>(fileName), posX, posY, title);
+	// TODO: fix this
+	//if (title == "") title = fileName;
+	//addImage(std::make_shared<QImage>(fileName), posX, posY, title);
 }
 
 void ImageGrid::addHistogram(int *values, int nrValues, int posX, int posY, QString title)

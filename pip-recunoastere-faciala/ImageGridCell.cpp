@@ -17,7 +17,7 @@ ImageGridCell::ImageGridCell(QWidget *parent)
 	showInfo = true;
 }
 
-void ImageGridCell::setImage(QImage* image, QString title)
+void ImageGridCell::setImage(const Image& image, QString title)
 {
 	titleLabel->setText(title);
 	viewer = new ImageViewer(this);
@@ -34,7 +34,7 @@ void ImageGridCell::updateInfo()
 
 void ImageGridCell::setImage(QString fileName, QString title)
 {
-	setImage(new QImage(fileName), title == "" ? fileName : title);
+	//setImage(new QImage(fileName), title == "" ? fileName : title);
 }
 
 void ImageGridCell::setHistogram(int *values, int size, QString title)

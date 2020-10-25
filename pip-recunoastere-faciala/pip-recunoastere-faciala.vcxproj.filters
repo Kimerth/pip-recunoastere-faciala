@@ -54,9 +54,6 @@
     <ClInclude Include="operatii.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PITimer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="AbstractViewer.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -28,7 +28,6 @@
     <ClInclude Include="ImageGridCell.h" />
     <ClInclude Include="ImageViewer.h" />
     <ClInclude Include="operatii.h" />
-    <ClInclude Include="PITimer.h" />
     <ClInclude Include="Vec2.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

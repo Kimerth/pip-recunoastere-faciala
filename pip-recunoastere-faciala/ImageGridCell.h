@@ -3,6 +3,8 @@
 #include <QSizePolicy>
 #include <QLabel>
 #include "AbstractViewer.h"
+#include <memory>
+#include "Image.hpp"
 
 class ImageGridCell : public QWidget
 {
@@ -14,7 +16,7 @@ class ImageGridCell : public QWidget
 
 public:
 	ImageGridCell(QWidget *parent = nullptr);
-	void setImage(QImage* image, QString title);
+	void setImage(const Image&, QString);
 	void setHistogram(int *values, int size, QString title = "");
 	void updateInfo();
 	void setImage(QString fileName, QString title = "");

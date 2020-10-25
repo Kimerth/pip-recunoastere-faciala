@@ -6,30 +6,23 @@
 
 ImageViewer::ImageViewer(QWidget *parent)
 	: AbstractViewer(parent),
-	tx(0), ty(0),
-	imx(0), imy(0), imW(0), imH(0),
+	t({ 0, 0 }), imPos({ 0 , 0 }), imSize({ 0, 0 }), image(Image({ 0, 0 })),
 	scrollBarThickness(4),
 	enableScrollBars(false)
 {
 }
 
-void ImageViewer::setImage(QImage* _image)
+void ImageViewer::setImage(const Image& _image)
 {
-	if (_image)
-	{
-		image = _image;
-		imW = image->width();
-		imH = image->height();
-		update();
-	}
+	image = _image;
+	imSize = image.dims();
+	update();
 }
 
 void ImageViewer::restoreOriginalSize()
 {
-	imx = 0;
-	imy = 0;
-	imW = image->width();
-	imH = image->height();
+	imPos = { 0, 0 };
+	imSize = image.dims();
 	scaleFactor = 1.0f;
 	update();
 	updateInfo();
@@ -52,8 +45,7 @@ void ImageViewer::mouseMoveEvent(QMouseEvent *e)
 		{
 			int mx = e->pos().x();
 			int my = e->pos().y();
-			tx = mx - mousePosX;
-			ty = my - mousePosY;
+			t = { mx - mousePosX , my - mousePosY };
 			mousePosX = mx;
 			mousePosY = my;
 			update();
@@ -67,10 +59,8 @@ void ImageViewer::wheelEvent(QWheelEvent *e)
 	{
 		float oldScaleFactor = scaleFactor;
 		scaleFactor *= 1 + (float)e->delta() / 1200;
-		imx -= e->pos().x() * (scaleFactor - oldScaleFactor);
-		imy -= e->pos().y() * (scaleFactor - oldScaleFactor);
-		imW = image->width() * scaleFactor;
-		imH = image->height() * scaleFactor;
+		imPos -= {(int)(e->pos().x() * (scaleFactor - oldScaleFactor)), (int)(e->pos().y() * (scaleFactor - oldScaleFactor))};
+		imSize = image.dims() * scaleFactor;
 		update();
 		updateInfo();
 	}
@@ -101,9 +91,9 @@ void ImageViewer::resizeEvent(QResizeEvent* e)
 QString ImageViewer::getInfo()
 {
 	std::string info;
-	info += "Size:" + std::to_string(imW) + "x" + std::to_string(imH) +
-		"\nOriginal size: " + std::to_string(image->width()) + "x" +
-		std::to_string(image->height()) +
+	info += "Size:" + std::to_string(imSize.x) + "x" + std::to_string(imSize.y) +
+		"\nOriginal size: " + std::to_string(image.width()) + "x" +
+		std::to_string(image.height()) +
 		"\nAuto resize: " + (autoResize ? "on" : "off");
 	return QString::fromStdString(info);
 }
@@ -116,105 +106,94 @@ void ImageViewer::paintEvent(QPaintEvent *e)
 	int viewW = width();
 	int viewH = height();
 
-	if (image)
+	float imAspect = (float)image.width() / image.height();
+	float viewAspect = (float)viewW / viewH;
+	if (autoResize)
 	{
-		float imAspect = (float)image->width() / image->height();
-		float viewAspect = (float)viewW / viewH;
-		if (autoResize)
+		if (imAspect >= viewAspect)
 		{
-			if (imAspect >= viewAspect)
-			{
-				imx = 0;
-				imW = viewW;
-				imH = imW / imAspect;
-				imy = (viewH - imH) / 2;
-			}
-			else
-			{
-				imy = 0;
-				imH = viewH;
-				imW = imH * imAspect;
-				imx = (viewW - imW) / 2;
-			}
-			tx = 0;
-			ty = 0;
+			imPos = { 0, (int)(viewH - viewW / imAspect) / 2 };
+			imSize = {viewW, (int)(viewW / imAspect)};
 		}
 		else
 		{
-			if (imW <= viewW)
-			{
-				imx = (viewW - imW) / 2;
-				tx = 0;
-			}
-			else
-			{
-				imx += tx;
-				if (imx > 0) imx = 0;
-				if (imx < viewW - imW) imx = viewW - imW;
-			}
-			if (imH <= viewH)
-			{
-				imy = (viewH - imH) / 2;
-				ty = 0;
-			}
-			else
-			{
-				imy += ty;
-				if (imy > 0) imy = 0;
-				if (imy < viewH - imH) imy = viewH - imH;
-			}
+			imPos = { (int)(viewW - viewH * imAspect) / 2, 0 };
+			imSize = { viewH, (int)(viewH * imAspect) };
 		}
-			
-		painter.drawImage(QRect(imx, imy, imW, imH), *image);
-
-		//pseudoscrollbars
-		if (enableScrollBars && !autoResize)
-		{
-			if (imW > viewW)
-			{
-				int sbarSizeX = viewW * viewW / imW;
-				int sbarSizeX2 = sbarSizeX / 2;
-				int sbarMinPosX = sbarSizeX2;
-				int sbarMaxPosX = viewW - sbarSizeX2;
-				int sbarPosX = sbarMinPosX + (float)imx / (viewW - imW) * (sbarMaxPosX - sbarMinPosX);
-
-				pen.setColor(Qt::darkRed);
-				pen.setWidth(scrollBarThickness);
-				painter.setPen(pen);
-				painter.drawRect(sbarPosX - sbarSizeX2, viewH - scrollBarThickness,
-					sbarSizeX, scrollBarThickness);
-			}
-			if (imH > viewH)
-			{
-				int sbarSizeY = viewH * viewH / imH;
-				int sbarSizeY2 = sbarSizeY / 2;
-				int sbarMinPosY = sbarSizeY2;
-				int sbarMaxPosY = viewH - sbarSizeY2;
-				int sbarPosY = sbarMinPosY + (float)imy / (viewH - imH) * (sbarMaxPosY - sbarMinPosY);
-
-				pen.setColor(Qt::darkRed);
-				pen.setWidth(scrollBarThickness);
-				painter.setPen(pen);
-				painter.drawRect(viewW - scrollBarThickness, sbarPosY - sbarSizeY2,
-					scrollBarThickness, sbarSizeY);
-			}
-		}	
+		t = { 0, 0 };
 	}
 	else
 	{
-		pen.setColor(Qt::red);
-		painter.setPen(pen);
-		painter.drawLine(0, 0, viewW, viewH);
-		painter.drawLine(viewW, 0, 0, viewH);
-		painter.drawRect(QRect(0, 0, viewW, viewH));
+		if (imSize.x <= viewW)
+		{
+			imPos.x = (viewW - imSize.x) / 2;
+			t.x = 0;
+		}
+		else
+		{
+			imPos.x += t.x;
+			if (imPos.x > 0) imPos.x = 0;
+			if (imPos.x < viewW - imSize.x) imPos.x = viewW - imSize.x;
+		}
+		if (imSize.y <= viewH)
+		{
+			imPos.y = (viewH - imSize.y) / 2;
+			t.y = 0;
+		}
+		else
+		{
+			imPos.y += t.y;
+			if (imPos.y > 0) imPos.y = 0;
+			if (imPos.y < viewH - imSize.y) imPos.y = viewH - imSize.y;
+		}
 	}
+			
+	painter.drawImage(QRect(imPos.x, imPos.y, imSize.x, imSize.y), *image.get_qimage());
+
+	//pseudoscrollbars
+	if (enableScrollBars && !autoResize)
+	{
+		if (imSize.x > viewW)
+		{
+			int sbarSizeX = viewW * viewW / imSize.x;
+			int sbarSizeX2 = sbarSizeX / 2;
+			int sbarMinPosX = sbarSizeX2;
+			int sbarMaxPosX = viewW - sbarSizeX2;
+			int sbarPosX = sbarMinPosX + (float)imPos.x / (viewW - imSize.x) * (sbarMaxPosX - sbarMinPosX);
+
+			pen.setColor(Qt::darkRed);
+			pen.setWidth(scrollBarThickness);
+			painter.setPen(pen);
+			painter.drawRect(sbarPosX - sbarSizeX2, viewH - scrollBarThickness,
+				sbarSizeX, scrollBarThickness);
+		}
+		if (imSize.y > viewH)
+		{
+			int sbarSizeY = viewH * viewH / imSize.x;
+			int sbarSizeY2 = sbarSizeY / 2;
+			int sbarMinPosY = sbarSizeY2;
+			int sbarMaxPosY = viewH - sbarSizeY2;
+			int sbarPosY = sbarMinPosY + (float)imPos.y / (viewH - imSize.x) * (sbarMaxPosY - sbarMinPosY);
+
+			pen.setColor(Qt::darkRed);
+			pen.setWidth(scrollBarThickness);
+			painter.setPen(pen);
+			painter.drawRect(viewW - scrollBarThickness, sbarPosY - sbarSizeY2,
+				scrollBarThickness, sbarSizeY);
+		}
+	}	
+	//pen.setColor(Qt::red);
+	//painter.setPen(pen);
+	//painter.drawLine(0, 0, viewW, viewH);
+	//painter.drawLine(viewW, 0, 0, viewH);
+	//painter.drawRect(QRect(0, 0, viewW, viewH));
 }
 
-QSize ImageViewer::sizeHint() const
-{
-	if (image) return image->size();
-	return QWidget::sizeHint();
-}
+//QSize ImageViewer::sizeHint() const
+//{
+//	if (image) return image->size();
+//	return QWidget::sizeHint();
+//}
 
 void ImageViewer::setAutoResize(bool enabled)
 {

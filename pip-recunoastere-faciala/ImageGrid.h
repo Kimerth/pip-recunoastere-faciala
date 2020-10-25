@@ -14,7 +14,6 @@ class ImageGrid : public QWidget
 
 public:
 	ImageGrid(QString title = "ACPI", QWidget *parent = nullptr);
-	void addImage(std::shared_ptr<QImage> image, int posX, int posY, QString title);
 	void addImage(const Image& image, Vec2 pos, QString title = "");
 	void addImage(QString fileName, int posX, int posY, QString title = "");
 	void addHistogram(int *values, int nrValues, int posX, int posY, QString title = "histogram");
