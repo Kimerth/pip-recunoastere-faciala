@@ -17,6 +17,7 @@ private:
 public:
 	Image(const char* fileName);
 	Image(Vec2 dim);
+	Image();
 
 	Image(const Image&);
 	Image& operator=(const Image&);
@@ -30,5 +31,5 @@ public:
 	int width() const;
 	int height() const;
 
-	std::shared_ptr<QImage> get_qimage() const;
+	QImage get_qimage() const;
 };

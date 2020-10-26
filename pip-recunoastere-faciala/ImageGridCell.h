@@ -19,7 +19,7 @@ public:
 	void setImage(const Image&, QString);
 	void setHistogram(int *values, int size, QString title = "");
 	void updateInfo();
-	void setImage(QString fileName, QString title = "");
+	void setImage(const char* fileName, QString title = "");
 	void setBottomText(QString text = "");
 	void setAutoResize(bool enable);
 	void restoreOriginalSize();

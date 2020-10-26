@@ -6,7 +6,7 @@
 
 ImageViewer::ImageViewer(QWidget *parent)
 	: AbstractViewer(parent),
-	t({ 0, 0 }), imPos({ 0 , 0 }), imSize({ 0, 0 }), image(Image({ 0, 0 })),
+	t(), imPos(), imSize(), image(),
 	scrollBarThickness(4),
 	enableScrollBars(false)
 {
@@ -148,7 +148,7 @@ void ImageViewer::paintEvent(QPaintEvent *e)
 		}
 	}
 			
-	painter.drawImage(QRect(imPos.x, imPos.y, imSize.x, imSize.y), *image.get_qimage());
+	painter.drawImage(QRect(imPos.x, imPos.y, imSize.x, imSize.y), image.get_qimage());
 
 	//pseudoscrollbars
 	if (enableScrollBars && !autoResize)

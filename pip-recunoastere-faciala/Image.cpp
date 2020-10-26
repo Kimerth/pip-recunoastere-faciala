@@ -20,6 +20,9 @@ Image::Image(Vec2 dim) : dim(dim)
 	//memset(img.data(), 0, dim.x * dim.y * sizeof(uchar));
 }
 
+Image::Image() : Image({0, 0})
+{}
+
 Image::Image(const Image& other)
 	: dim(other.dim)
 {
@@ -72,11 +75,12 @@ int Image::height() const
 	return dim.y;
 }
 
-std::shared_ptr<QImage> Image::get_qimage() const
+QImage Image::get_qimage() const
 {
-	auto ret = std::make_shared<QImage>(img.data(), dim.x, dim.y, dim.x, QImage::Format_Indexed8);
-	ret->setColorTable(grayLUT);
-	return ret;
+	QImage ret(img.data(), dim.x, dim.y, dim.x, QImage::Format_Indexed8);
+	ret.setColorTable(grayLUT);
+
+	return std::move(ret);
 }
 
 QVector<QRgb> Image::grayLUT =

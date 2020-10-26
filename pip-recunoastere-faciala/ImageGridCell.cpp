@@ -32,9 +32,9 @@ void ImageGridCell::updateInfo()
 	bottomLabel->setText(viewer->getInfo());
 }
 
-void ImageGridCell::setImage(QString fileName, QString title)
+void ImageGridCell::setImage(const char* fileName, QString title)
 {
-	//setImage(new QImage(fileName), title == "" ? fileName : title);
+	setImage(Image(fileName), title == "" ? fileName : title);
 }
 
 void ImageGridCell::setHistogram(int *values, int size, QString title)

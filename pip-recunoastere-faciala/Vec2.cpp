@@ -38,12 +38,11 @@ Vec2 Vec2::operator-=(const Vec2& other)
 	return *this;
 }
 
-Vec2 Vec2::operator*(int scale)
+Vec2 operator*(const Vec2& vec, double scale)
 {
-	return Vec2(x * scale, y * scale);
+	return Vec2(static_cast<int>(vec.x * scale), static_cast<int>(vec.y * scale));
 }
-
-Vec2 Vec2::operator*(float scale)
+Vec2 operator*(double scale, const Vec2& vec)
 {
-	return Vec2((int)(x * scale), (int)(y * scale));
+	return operator*(vec, scale);
 }

@@ -15,7 +15,7 @@ class ImageGrid : public QWidget
 public:
 	ImageGrid(QString title = "ACPI", QWidget *parent = nullptr);
 	void addImage(const Image& image, Vec2 pos, QString title = "");
-	void addImage(QString fileName, int posX, int posY, QString title = "");
+	void addImage(const char* fileName, Vec2 pos, QString title = "");
 	void addHistogram(int *values, int nrValues, int posX, int posY, QString title = "histogram");
 	QSize getCellSize();
 	void keyPressEvent(QKeyEvent *e);

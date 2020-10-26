@@ -20,11 +20,12 @@ void ImageGrid::addImage(const Image& image, Vec2 pos, QString title)
 	layout->addWidget(cell, pos.x, pos.y);
 }
 
-void ImageGrid::addImage(QString fileName, int posX, int posY, QString title)
+void ImageGrid::addImage(const char* fileName, Vec2 pos, QString title)
 {
-	// TODO: fix this
-	//if (title == "") title = fileName;
-	//addImage(std::make_shared<QImage>(fileName), posX, posY, title);
+	if (title == "")
+		title = fileName;
+
+	addImage(Image(fileName), pos, title);
 }
 
 void ImageGrid::addHistogram(int *values, int nrValues, int posX, int posY, QString title)
