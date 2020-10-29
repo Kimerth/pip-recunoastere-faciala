@@ -30,6 +30,9 @@
     <ClInclude Include="operatii.h" />
     <ClInclude Include="Vec2.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{64A858C8-901C-49F3-9A86-62CBE49BD414}</ProjectGuid>
     <Keyword>QtVS_v303</Keyword>
@@ -110,5 +113,12 @@
     <Import Project="$(QtMsBuild)\qt.targets" />
   </ImportGroup>
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\opencv4.2.2020.5.26\build\native\opencv4.2.targets" Condition="Exists('..\packages\opencv4.2.2020.5.26\build\native\opencv4.2.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\opencv4.2.2020.5.26\build\native\opencv4.2.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\opencv4.2.2020.5.26\build\native\opencv4.2.targets'))" />
+  </Target>
 </Project>
