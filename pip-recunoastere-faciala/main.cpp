@@ -1,20 +1,13 @@
 #include <QApplication>
-#include "ImageGrid.h"
-#include "operatii.h"
-#include "Image.hpp"
-#include "Recognition.hpp"
+#include "MainWindow.h"
+#include <iostream>
+#include <filesystem>
 
 int main(int argc, char *argv[])
 {
-	srand(time(NULL));
+	QApplication app(argc, argv);
+	MainWindow mainWindow;
 
-	cv::Mat X, X_test;
-	std::vector<int> classes, classes_test;
-	readData(40, 10, X, classes, X_test, classes_test);
-
-	cv::Mat Y, W;
-	computeTransformation(40, X, classes, W, Y);
-	//draw_faces(W);
-	test(W, Y, classes, classes_test, X_test);
+	mainWindow.show();
+	return app.exec();
 }
-
