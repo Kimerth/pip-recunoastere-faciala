@@ -17,7 +17,13 @@
     <ClCompile Include="ImageGrid.cpp" />
     <ClCompile Include="ImageGridCell.cpp" />
     <ClCompile Include="ImageViewer.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="main.cpp">
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">input</DynamicSource>
+      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).moc</QtMocFileName>
+      <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Release|x64'">input</DynamicSource>
+      <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).moc</QtMocFileName>
+    </ClCompile>
+    <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="Vec2.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -27,11 +33,15 @@
     <ClInclude Include="ImageGrid.h" />
     <ClInclude Include="ImageGridCell.h" />
     <ClInclude Include="ImageViewer.h" />
+    <ClInclude Include="MainWindow.h" />
     <ClInclude Include="operatii.h" />
     <ClInclude Include="Vec2.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="MainWindow.ui" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{64A858C8-901C-49F3-9A86-62CBE49BD414}</ProjectGuid>
