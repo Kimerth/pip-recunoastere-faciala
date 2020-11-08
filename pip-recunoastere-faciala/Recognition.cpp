@@ -1,8 +1,6 @@
 #include "Recognition.hpp"
 #include <limits>
 #include <opencv2/imgcodecs.hpp>
-#include <qdiriterator.h>
-#include <qregularexpression.h>
 #include <opencv2/highgui.hpp>
 
 
@@ -20,12 +18,12 @@ void readData(const int C, const int nSamples, cv::Mat& X, std::vector<int>& cla
 		for (int j = 1; j <= nSamples; ++j) 
 		{
 			//TODO: take path as parameter
-			sprintf_s(fname, "Images/att/s%d/%d.pgm", i, j);
+			sprintf_s(fname, R"(Images\att\s%d\%d.pgm)", i, j);
 			//printf("%s\t", fname);
 
 			cv::Mat img = cv::imread(fname, cv::IMREAD_GRAYSCALE);
 			
-			assert(img.rows == 92 && img.cols == 112);
+			assert(img.rows == 112 && img.cols == 92);
 
 			img = img.reshape(1);
 			img.convertTo(img, CV_8U);
@@ -40,7 +38,7 @@ void readData(const int C, const int nSamples, cv::Mat& X, std::vector<int>& cla
 		}
 
 		//! randomly picks an image from the train set and moves it to the test set
-		int rnd = rand() % 10;
+		int rnd = rand() % nSamples;
 		int idx = (i - 1) * (nSamples - 1) + rnd;
 		images_test.push_back(images[idx]);
 		classes_test.push_back(classes[idx]);
