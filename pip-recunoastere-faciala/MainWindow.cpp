@@ -15,14 +15,11 @@ void MainWindow::detect()
 {
 	srand(time(NULL));
 
-	cv::Mat X, X_test;
-	std::vector<int> classes, classes_test;
-	readData(40, 10, X, classes, X_test, classes_test);
+	auto facialData = readData(40, 10);
 
-	cv::Mat Y, W;
-	computeTransformation(40, X, classes, W, Y);
-	draw_faces(W);
-	test(W, Y, classes, classes_test, X_test);
+	auto transformation = computeTransformation(facialData);
+	draw_faces(transformation.W);
+	test(facialData, transformation);
 }
 
 void MainWindow::select()

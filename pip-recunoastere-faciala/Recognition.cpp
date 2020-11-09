@@ -4,14 +4,16 @@
 #include <opencv2/highgui.hpp>
 
 
-void readData(const int C, const int nSamples, cv::Mat& X, std::vector<int>& classes, cv::Mat& X_test, std::vector<int>& classes_test)
+FacialData readData(const int nClasses, const int nSamples)
 {
+	FacialData ret;
+	auto& [_, X, classes, X_test, classes_test] = ret;
+	ret.nClasses = nClasses;
+
 	std::vector<cv::Mat> images;
 	std::vector<cv::Mat> images_test;
-	classes.empty();
-	classes_test.empty();
 
-	for(int i = 1; i <= C; ++i)
+	for(int i = 1; i <= nClasses; ++i)
 	{
 		char fname[128];
 
@@ -37,7 +39,7 @@ void readData(const int C, const int nSamples, cv::Mat& X, std::vector<int>& cla
 			cv::imshow(debug, images[(i - 1) * nSamples + j - 1]);*/
 		}
 
-		//! randomly picks an image from the train set and moves it to the test set
+		/// randomly picks an image from the train set and moves it to the test set
 		int rnd = rand() % nSamples;
 		int idx = (i - 1) * (nSamples - 1) + rnd;
 		images_test.push_back(images[idx]);
@@ -49,19 +51,25 @@ void readData(const int C, const int nSamples, cv::Mat& X, std::vector<int>& cla
 	
 	int n = images[0].total();
 
-	//! flattens train images and copies them into the columns of X
+	/// flattens train images and copies them into the columns of X
 	X = cv::Mat(n, images.size(), CV_32F);
 	for (int i = 0; i < images.size(); ++i)
 		images[i].reshape(1, n).copyTo(X.col(i));
 
-	//! flattens test images and copies them into the columns of X
+	/// flattens test images and copies them into the columns of X
 	X_test = cv::Mat(n, images_test.size(), CV_32F);
 	for (int i = 0; i < images_test.size(); ++i)
 		images_test[i].reshape(1, n).copyTo(X_test.col(i));
+
+	return ret;
 }
 
-void computeTransformation(const int C, const cv::Mat& X, const std::vector<int>& classes, cv::Mat& W, cv::Mat& Y)
+TransformationData computeTransformation(const FacialData& facialData)
 {
+	TransformationData ret;
+	const auto& [C, X, classes, X_test, classes_test] = facialData;
+	auto& [W, Y] = ret;
+
 	//! calculates the class frequency
 	std::vector<int> classFreq;
 	classFreq.resize(C);
@@ -79,10 +87,13 @@ void computeTransformation(const int C, const cv::Mat& X, const std::vector<int>
 
 	cv::eigen(scatter, eival, eivec);
 
-	//! the rank of S_w is at most N - C (where N is the total number of train samples and C is the number of classes
-	cv::Mat bestKEivec(X.cols, X.cols - C, CV_32F);
-	//! picks the k greatest eigenvalues and copies their respective eigenvectors into a matrix' columns
-	for (int i = 0; i < X.cols - C; ++i) 
+	const auto K = X.cols - C;
+
+	/// the rank of S_w is at most N - C (where N is the total number of train samples and C is the number of classes)
+	cv::Mat bestKEivec(X.cols, K, CV_32F);
+
+	/// picks the k greatest eigenvalues and copies their respective eigenvectors into a matrix' columns
+	for (int i = 0; i < K; ++i)
 	{
 		float max = -std::numeric_limits<float>::max();
 		int idx = -1;
@@ -99,8 +110,8 @@ void computeTransformation(const int C, const cv::Mat& X, const std::vector<int>
 
 	cv::Mat Wpca = X * bestKEivec;
 
-	//! normalizes the eigenvectors
-	for (int i = 0; i < Wpca.cols; ++i) 
+	/// normalizes the eigenvectors
+	for (int i = 0; i < Wpca.cols; ++i)
 		Wpca.col(i) /= cv::norm(Wpca.col(i));
 
 	cv::Mat P = Wpca.t() * X;
@@ -179,9 +190,11 @@ void computeTransformation(const int C, const cv::Mat& X, const std::vector<int>
 #pragma endregion
 
 	W = Wpca * Wfld;
+
+	return ret;
 }
 
-void draw_faces(cv::Mat& W)
+void draw_faces(const cv::Mat& W)
 {
 	for (int i = 0; i < W.cols; ++i)
 	{
@@ -206,8 +219,11 @@ void draw_faces(cv::Mat& W)
 	}
 }
 
-void test(const cv::Mat& W, const cv::Mat& Y, const std::vector<int>& classes, const std::vector<int>& classes_test, const cv::Mat& X_test)
+void test(const FacialData& facialData, const TransformationData& transformationData)
 {
+	const auto& [nClasses, X, classes, X_test, classes_test] = facialData;
+	const auto& [W, Y] = transformationData;
+
 	cv::Mat Y_test = W.t() * X_test;
 	
 	std::vector<int> closest;
