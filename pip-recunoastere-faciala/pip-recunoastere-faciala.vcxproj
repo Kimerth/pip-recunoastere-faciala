@@ -34,7 +34,7 @@
     <ClInclude Include="ImageGrid.h" />
     <ClInclude Include="ImageGridCell.h" />
     <ClInclude Include="ImageViewer.h" />
-    <ClInclude Include="MainWindow.h" />
+    <QtMoc Include="MainWindow.h" />
     <ClInclude Include="operatii.h" />
     <ClInclude Include="Recognition.hpp" />
     <ClInclude Include="Vec2.hpp" />

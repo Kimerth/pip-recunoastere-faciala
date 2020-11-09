@@ -57,8 +57,6 @@ TransformationData computeTransformation(const FacialData& facialData);
 	\brief Utility to visualize the transformation matrix
 
 	\param W				Input transformation matrix.
-
-	\see FacialData
 */
 void draw_faces(const cv::Mat& W);
 
@@ -71,9 +69,11 @@ void draw_faces(const cv::Mat& W);
 	\param facialData - Input facial data
 	\param transformationData - Input transformation data
 
+	\returns Accuracy of guesses, procentual
+
 	\see FacialData
 	\see TransformationData
 */
-void test(const FacialData& facialData, const TransformationData& transformationData);
+float test(const FacialData& facialData, const TransformationData& transformationData);
 
 //cv::Mat softmax(cv::Mat in);

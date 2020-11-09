@@ -110,9 +110,27 @@ TransformationData computeTransformation(const FacialData& facialData)
 
 	cv::Mat Wpca = X * bestKEivec;
 
-	/// normalizes the eigenvectors
+	/// normalizes the vectors
 	for (int i = 0; i < Wpca.cols; ++i)
 		Wpca.col(i) /= cv::norm(Wpca.col(i));
+	
+	/*{
+		cv::Mat w, u, vt;
+		cv::SVDecomp(Wpca, w, u, vt);
+		Wpca = u;
+	}*/
+#ifndef NDEBUG
+	/*
+	/// assert Wpca has normalized columns
+	for (int i = 0; i < Wpca.cols; ++i)
+		assert(cv::norm(Wpca.col(i)) - 1 < 1e-4);
+
+	/// assert Wpca has orthogonal columns
+	for (int i = 0; i < Wpca.cols; ++i)
+		for (int j = i + 1; j < Wpca.cols; ++j)
+			assert(Wpca.col(i).dot(Wpca.col(j)) < 1e-4);
+	*/
+#endif
 
 	cv::Mat P = Wpca.t() * X;
 
@@ -184,7 +202,7 @@ TransformationData computeTransformation(const FacialData& facialData)
 		eivec.col(idx).copyTo(Wfld.col(i));
 	}
 
-	//! the input space was already transformed by Wpca
+	/// the input space was already transformed by Wpca
 	Y = Wfld.t() * P;
 
 #pragma endregion
@@ -219,7 +237,7 @@ void draw_faces(const cv::Mat& W)
 	}
 }
 
-void test(const FacialData& facialData, const TransformationData& transformationData)
+float test(const FacialData& facialData, const TransformationData& transformationData)
 {
 	const auto& [nClasses, X, classes, X_test, classes_test] = facialData;
 	const auto& [W, Y] = transformationData;
@@ -247,7 +265,7 @@ void test(const FacialData& facialData, const TransformationData& transformation
 		if (classes[closest[i]] == classes_test[i])
 			cnt++;
 
-	printf("%lf", ((double)cnt / Y_test.cols) * 100);
+	return (static_cast<float>(cnt) / Y_test.cols) * 100;
 }
 
 //cv::Mat softmax(cv::Mat in)
