@@ -68,10 +68,11 @@ void draw_faces(const cv::Mat& W);
 	Will apply the transformation matrix onto the test matrix and then for each image vector it will find the closest train image vector and check if it corresponds to the actual train class.
 	Prints the resulting accuracy in console.
 
-	\param W				Input transformation matrix.
-	\param classes			Input train classes.
-	\param classes_test		Input test classes.
-	\param X_test			Input test matrix.
+	\param facialData - Input facial data
+	\param transformationData - Input transformation data
+
+	\see FacialData
+	\see TransformationData
 */
 void test(const FacialData& facialData, const TransformationData& transformationData);
 
