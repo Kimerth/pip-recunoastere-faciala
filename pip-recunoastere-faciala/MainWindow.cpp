@@ -8,17 +8,41 @@ MainWindow::MainWindow()
 {
 	setupUi(this);
 
-	auto temp = QPixmap("Images/lena512.bmp");
-	scene.addPixmap(temp);
-	QPen pen = QPen(Qt::red, 5);
-	scene.addRect(150, 150, 350, 350, pen);
-
 	graphicsView->setScene(&scene);
 
 	connect(detectButton, &QPushButton::clicked, this, &MainWindow::detect);
 	connect(selectButton, &QPushButton::clicked, this, &MainWindow::select);
 	connect(this, &MainWindow::selected, filePath, &QLineEdit::setText);
 	connect(this, &MainWindow::selected, this, &MainWindow::displayImage);
+}
+
+void MainWindow::mouseMoveEvent(QMouseEvent* e)
+{
+	if (e->button() == Qt::LeftButton && mousePressed)
+	{
+		auto diff = e->pos() - mousePos;
+		moveSquare(diff);
+	}
+}
+
+void MainWindow::mousePressEvent(QMouseEvent* e)
+{
+	if (e->buttons() & Qt::LeftButton)
+	{
+		mousePressed = true;
+		mousePos = e->pos();
+	}
+}
+
+void MainWindow::mouseReleaseEvent(QMouseEvent* e)
+{
+	if(!(e->buttons() & Qt::LeftButton))
+		mousePressed = false;
+}
+
+void MainWindow::wheelEvent(QWheelEvent* e)
+{
+
 }
 
 void MainWindow::detect()
@@ -39,17 +63,33 @@ void MainWindow::detect()
 
 void MainWindow::select()
 {
-	QFileDialog dialog(nullptr, "Select image", ".", "Images (*.pgm)");
+	QFileDialog dialog(nullptr, "Select image", ".", "Images (*.pgm *.png *.jpg *.bmp)");
 	dialog.setFileMode(QFileDialog::FileMode::ExistingFile);
 
 	if (dialog.exec())
 	{
-		selectedFile = dialog.selectedFiles()[0];
-		filePath->setText(selectedFile);
+		emit selected(dialog.selectedFiles()[0]);
 	}
 }
 
-void MainWindow::displayImage(const char* path)
+void MainWindow::displayImage(const QString& path)
 {
-	graphicsView->show();
+	scene.clear();
+
+	QPixmap img(path);
+	scene.addPixmap(img);
+
+	QPen pen = QPen(Qt::red, 5);
+	item = scene.addRect(0, 0, 368, 448, pen);
+
+	scene.update(scene.sceneRect());
+}
+
+void MainWindow::moveSquare(const QPoint& diff, double scale)
+{
+	if (item != nullptr)
+	{
+		item->setPos(item->pos() + diff);
+		item->setScale(item->scale() + scale);
+	}
 }
