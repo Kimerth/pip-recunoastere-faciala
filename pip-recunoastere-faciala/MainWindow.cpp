@@ -8,6 +8,13 @@ MainWindow::MainWindow()
 {
 	setupUi(this);
 
+	auto temp = QPixmap("Images/lena512.bmp");
+	scene.addPixmap(temp);
+	QPen pen = QPen(Qt::red, 5);
+	scene.addRect(150, 150, 350, 350, pen);
+
+	graphicsView->setScene(&scene);
+
 	connect(detectButton, &QPushButton::clicked, this, &MainWindow::detect);
 	connect(selectButton, &QPushButton::clicked, this, &MainWindow::select);
 	connect(this, &MainWindow::selected, filePath, &QLineEdit::setText);
@@ -44,5 +51,5 @@ void MainWindow::select()
 
 void MainWindow::displayImage(const char* path)
 {
-	// TODO
+	graphicsView->show();
 }

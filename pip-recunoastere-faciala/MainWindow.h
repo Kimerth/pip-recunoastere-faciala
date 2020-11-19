@@ -17,4 +17,5 @@ signals:
 
 private:
 	QString selectedFile;
+	QGraphicsScene scene;
 };
