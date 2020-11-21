@@ -35,10 +35,22 @@ struct TransformationData
 
 	\param classes			Number of classes.
 	\param nSample			Number of samples per class.
+	\param useTestData		Randomly pick images from the training set for the test set (for testing the accuracy of the algorithm)
+	\returns				Facial data read from disk
 
 	\see struct FacialData
 */
-FacialData readData(int nClasses, int nSamples);
+FacialData readData(int nClasses, int nSamples, bool useTestData = false);
+
+/*
+	\brief Flatten image and place it into X_test as a column
+
+	\param facialData		Facial data to change
+	\param img				Image to add to test matrix
+
+	\see struct FacialData
+*/
+void addImageTest(FacialData& facialData, cv::Mat& img);
 
 /*
 	\brief Computes the matrix used to represent the input data by finding a subspace which represents most of the data variance

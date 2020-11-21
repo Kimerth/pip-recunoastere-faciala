@@ -4,7 +4,7 @@
 #include <opencv2/highgui.hpp>
 
 
-FacialData readData(const int nClasses, const int nSamples)
+FacialData readData(const int nClasses, const int nSamples, bool useTestData)
 {
 	FacialData ret;
 	auto& [_, X, classes, X_test, classes_test] = ret;
@@ -39,13 +39,16 @@ FacialData readData(const int nClasses, const int nSamples)
 			cv::imshow(debug, images[(i - 1) * nSamples + j - 1]);*/
 		}
 
-		/// randomly picks an image from the train set and moves it to the test set
-		int rnd = rand() % nSamples;
-		int idx = (i - 1) * (nSamples - 1) + rnd;
-		images_test.push_back(images[idx]);
-		classes_test.push_back(classes[idx]);
-		images.erase(images.begin() + idx);
-		classes.erase(classes.begin() + idx);
+		if (useTestData)
+		{
+			/// randomly picks an image from the train set and moves it to the test set
+			int rnd = rand() % nSamples;
+			int idx = (i - 1) * (nSamples - 1) + rnd;
+			images_test.push_back(images[idx]);
+			classes_test.push_back(classes[idx]);
+			images.erase(images.begin() + idx);
+			classes.erase(classes.begin() + idx);
+		}
 		//cv::waitKey();
 	}
 	
@@ -56,12 +59,21 @@ FacialData readData(const int nClasses, const int nSamples)
 	for (int i = 0; i < images.size(); ++i)
 		images[i].reshape(1, n).copyTo(X.col(i));
 
-	/// flattens test images and copies them into the columns of X
-	X_test = cv::Mat(n, images_test.size(), CV_32F);
-	for (int i = 0; i < images_test.size(); ++i)
-		images_test[i].reshape(1, n).copyTo(X_test.col(i));
+	if (useTestData)
+	{
+		/// flattens test images and copies them into the columns of X
+		X_test = cv::Mat(n, images_test.size(), CV_32F);
+		for (int i = 0; i < images_test.size(); ++i)
+			images_test[i].reshape(1, n).copyTo(X_test.col(i));
+	}
 
 	return ret;
+}
+
+void addImageTest(FacialData& facialData, cv::Mat & img)
+{
+	facialData.X_test = cv::Mat(img.rows * img.cols, 1, CV_32F);
+	img.reshape(1, img.rows * img.cols).copyTo(facialData.X_test.col(0));
 }
 
 TransformationData computeTransformation(const FacialData& facialData)
@@ -245,6 +257,8 @@ float test(const FacialData& facialData, const TransformationData& transformatio
 	cv::Mat Y_test = W.t() * X_test;
 	
 	std::vector<int> closest;
+	std::vector<float> distances;
+	distances.resize(Y_test.cols);
 	closest.resize(Y_test.cols);
 
 	for (int i = 0; i < Y_test.cols; ++i) 
@@ -258,14 +272,20 @@ float test(const FacialData& facialData, const TransformationData& transformatio
 				closest[i] = j;
 			}
 		}
+		distances[i] = min_dist;
 	}
 
-	int cnt = 0;
-	for (int i = 0; i < Y_test.cols; ++i)
-		if (classes[closest[i]] == classes_test[i])
-			cnt++;
+	if (classes_test.size() == Y_test.cols)
+	{
+		int cnt = 0;
+		for (int i = 0; i < Y_test.cols; ++i)
+			if (classes[closest[i]] == classes_test[i])
+				cnt++;
 
-	return (static_cast<float>(cnt) / Y_test.cols) * 100;
+		return (static_cast<float>(cnt) / Y_test.cols) * 100;
+	}
+	else
+		return distances[0];
 }
 
 //cv::Mat softmax(cv::Mat in)

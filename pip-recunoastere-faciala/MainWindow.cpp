@@ -88,16 +88,17 @@ void MainWindow::detect()
 	cv::resize(img, img, { 92, 112 });
 	cv::imshow("resized", img);
 
-	//auto facialData = readData(40, 10);
+	auto facialData = readData(40, 10);
+	addImageTest(facialData, img);
 
-	//auto transformation = computeTransformation(facialData);
-	////draw_faces(transformation.W);
-	//auto rez = test(facialData, transformation);
+	auto transformation = computeTransformation(facialData);
+	//draw_faces(transformation.W);
+	auto rez = test(facialData, transformation);
 
-	//char x[32];
-	//sprintf_s(x, "%f", rez);
+	char x[32];
+	sprintf_s(x, "%f", rez);
 
-	//QMessageBox::information(this, "Result", x);
+	QMessageBox::information(this, "Result", x);
 }
 
 void MainWindow::select()
