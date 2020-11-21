@@ -25,6 +25,9 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event)
 	auto mouseEvent = dynamic_cast<QMouseEvent*>(event);
 	auto wheelEvent = dynamic_cast<QWheelEvent*>(event);
 
+	if (image.isNull())
+		return false;
+
 	switch (event->type())
 	{
 	case QEvent::MouseMove:
@@ -55,15 +58,16 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event)
 
 void MainWindow::paintEvent(QPaintEvent* ptr)
 {
+	if (image.isNull())
+		return;
+
 	QMainWindow::paintEvent(ptr);
 
 	QPainter painter(this);
 	QPen pen = QPen(Qt::red, 5);
 	painter.setPen(pen);
 
-	if(!image.isNull())
-		painter.drawImage(QPoint{0, 0}, image);
-
+	painter.drawImage(QPoint{ 0, 0 }, image);
 	painter.drawRect(rectPos.x(), rectPos.y(), 92 * scale, 112 * scale);
 }
 
@@ -110,6 +114,8 @@ void MainWindow::select()
 void MainWindow::displayImage(const QString& path)
 {
 	image = QImage(path).scaledToHeight(500);
+	rectPos = { 0, 0 };
+	scale = 1;
 }
 
 void MainWindow::moveSquare(const QPoint& diff)
