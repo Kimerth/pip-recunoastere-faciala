@@ -1,6 +1,10 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QGraphicsItem>
+#include <QPainter>
+#include <opencv2/highgui.hpp>
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
 #include "MainWindow.h"
 #include "Recognition.hpp"
 
@@ -8,10 +12,7 @@ MainWindow::MainWindow()
 {
 	setupUi(this);
 
-	graphicsView->setScene(&scene);
-
-	graphicsView->setMouseTracking(true);
-	graphicsView->installEventFilter(this);
+	installEventFilter(this);
 
 	connect(detectButton, &QPushButton::clicked, this, &MainWindow::detect);
 	connect(selectButton, &QPushButton::clicked, this, &MainWindow::select);
@@ -21,62 +22,78 @@ MainWindow::MainWindow()
 
 bool MainWindow::eventFilter(QObject* obj, QEvent* event)
 {
-	if (obj != graphicsView)
-		return QMainWindow::eventFilter(obj, event);
+	auto mouseEvent = dynamic_cast<QMouseEvent*>(event);
+	auto wheelEvent = dynamic_cast<QWheelEvent*>(event);
 
-	auto t = event->type();
-
-	if (t == QEvent::MouseMove)
+	switch (event->type())
 	{
-		QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-		statusBar()->showMessage(QString("Mouse move (%1,%2)").arg(mouseEvent->pos().x()).arg(mouseEvent->pos().y()));
+	case QEvent::MouseMove:
+		if (mousePressed)
+		{
+			auto diff = mouseEvent->pos() - mousePos;
+			moveSquare(diff);
+		}
+		break;
+	case QEvent::MouseButtonPress:
+		if (mouseEvent->buttons() & Qt::LeftButton)
+		{
+			mousePressed = true;
+			mousePos = mouseEvent->pos();
+			lastRectPos = rectPos;
+		}
+		break;
+	case QEvent::MouseButtonRelease:
+		if (!(mouseEvent->buttons() & Qt::LeftButton))
+			mousePressed = false;
+		break;
+	case QEvent::Wheel:
+		scaleSquare(wheelEvent->delta() / 1200.0);
+		break;
 	}
 	return false;
 }
 
-void MainWindow::mouseMoveEvent(QMouseEvent* e)
+void MainWindow::paintEvent(QPaintEvent* ptr)
 {
-	if (e->button() == Qt::LeftButton && mousePressed)
-	{
-		auto diff = e->pos() - mousePos;
-		moveSquare(diff, 1);
-	}
-}
+	QMainWindow::paintEvent(ptr);
 
-void MainWindow::mousePressEvent(QMouseEvent* e)
-{
-	if (e->buttons() & Qt::LeftButton)
-	{
-		mousePressed = true;
-		mousePos = e->pos();
-	}
-}
+	QPainter painter(this);
+	QPen pen = QPen(Qt::red, 5);
+	painter.setPen(pen);
 
-void MainWindow::mouseReleaseEvent(QMouseEvent* e)
-{
-	if(!(e->buttons() & Qt::LeftButton))
-		mousePressed = false;
-}
+	if(!image.isNull())
+		painter.drawImage(QPoint{0, 0}, image);
 
-void MainWindow::wheelEvent(QWheelEvent* e)
-{
-
+	painter.drawRect(rectPos.x(), rectPos.y(), 92 * scale, 112 * scale);
 }
 
 void MainWindow::detect()
 {
+	if (image.isNull())
+	{
+		QMessageBox::warning(this, "Error", "Please select an image first");
+		return;
+	}
+
 	srand(time(NULL));
 
-	auto facialData = readData(40, 10);
+	cv::Mat img = cv::imread(filePath->text().toStdString().data(), cv::IMREAD_GRAYSCALE);
 
-	auto transformation = computeTransformation(facialData);
-	//draw_faces(transformation.W);
-	auto rez = test(facialData, transformation);
+	img = img(cv::Rect(rectPos.x(), rectPos.y(), scale * 92, scale * 112));
 
-	char x[32];
-	sprintf_s(x, "%f", rez);
+	cv::resize(img, img, { 92, 112 });
+	cv::imshow("resized", img);
 
-	QMessageBox::information(this, "Result", x);
+	//auto facialData = readData(40, 10);
+
+	//auto transformation = computeTransformation(facialData);
+	////draw_faces(transformation.W);
+	//auto rez = test(facialData, transformation);
+
+	//char x[32];
+	//sprintf_s(x, "%f", rez);
+
+	//QMessageBox::information(this, "Result", x);
 }
 
 void MainWindow::select()
@@ -92,22 +109,26 @@ void MainWindow::select()
 
 void MainWindow::displayImage(const QString& path)
 {
-	scene.clear();
-
-	QPixmap img(path);
-	scene.addPixmap(img);
-
-	QPen pen = QPen(Qt::red, 5);
-	item = scene.addRect(0, 0, 368, 448, pen);
-
-	scene.update(scene.sceneRect());
+	image = QImage(path).scaledToHeight(500);
 }
 
-void MainWindow::moveSquare(const QPoint& diff, double scale)
+void MainWindow::moveSquare(const QPoint& diff)
 {
-	if (item != nullptr)
-	{
-		item->setPos(item->pos() + diff);
-		item->setScale(item->scale() + scale);
-	}
+	rectPos = lastRectPos + diff;
+
+	rectPos.rx() = std::clamp<int>(rectPos.x(), 0, (image.isNull() ? 800 : image.width()) - scale * 90);
+	rectPos.ry() = std::clamp<int>(rectPos.y(), 0, 500 - scale * 112);
+
+	update();
+}
+
+void MainWindow::scaleSquare(double val)
+{
+	scale += val;
+
+	rectPos.rx() = std::clamp<int>(rectPos.x(), 0, (image.isNull() ? 800 : image.width()) - scale * 90);
+	rectPos.ry() = std::clamp<int>(rectPos.y(), 0, 500 - scale * 112);
+	scale = std::clamp<double>(scale, 1, 4);
+
+	update();
 }

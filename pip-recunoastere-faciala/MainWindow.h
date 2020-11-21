@@ -9,12 +9,8 @@ class MainWindow : public QMainWindow, private Ui_MainWindow
 public:
 	MainWindow();
 
-	void mouseMoveEvent(QMouseEvent* e) override;
-	void mousePressEvent(QMouseEvent* e) override;
-	void mouseReleaseEvent(QMouseEvent* e) override;
-	void wheelEvent(QWheelEvent* e) override;
-
 	bool eventFilter(QObject* obj, QEvent* event);
+	void paintEvent(QPaintEvent* ptr);
 
 public slots:
 	void detect();
@@ -25,11 +21,15 @@ signals:
 	void selected(QString&);
 
 private:
-	QGraphicsScene scene;
-	QGraphicsRectItem* item = nullptr;
 
 	QPoint mousePos;
 	bool mousePressed;
 
-	void moveSquare(const QPoint& diff, double scale);
+	QPoint lastRectPos;
+	QPoint rectPos = QPoint(0, 0);
+	double scale = 1;
+	QImage image;
+
+	void moveSquare(const QPoint& diff);
+	void scaleSquare(double val);
 };
