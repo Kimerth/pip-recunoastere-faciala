@@ -68,7 +68,7 @@ void MainWindow::paintEvent(QPaintEvent* ptr)
 	painter.setPen(pen);
 
 	painter.drawImage(QPoint{ 0, 0 }, image);
-	painter.drawRect(rectPos.x(), rectPos.y(), 92 * scale, 112 * scale);
+	painter.drawRect(rectPos.x(), rectPos.y(), 92 * rectScale, 112 * rectScale);
 }
 
 void MainWindow::detect()
@@ -83,10 +83,13 @@ void MainWindow::detect()
 
 	cv::Mat img = cv::imread(filePath->text().toStdString().data(), cv::IMREAD_GRAYSCALE);
 
-	img = img(cv::Rect(rectPos.x(), rectPos.y(), scale * 92, scale * 112));
+	const auto& pos = rectPos;
 
+	img = img(cv::Rect(pos.x(), pos.y(), rectScale * 92, rectScale * 112));
 	cv::resize(img, img, { 92, 112 });
+#ifndef NDEBUG
 	cv::imshow("resized", img);
+#endif
 
 	auto facialData = readData(40, 10);
 	addImageTest(facialData, img);
@@ -114,28 +117,28 @@ void MainWindow::select()
 
 void MainWindow::displayImage(const QString& path)
 {
-	image = QImage(path).scaledToHeight(500);
+	image = QImage(path);
 	rectPos = { 0, 0 };
-	scale = 1;
+	rectScale = 1;
 }
 
 void MainWindow::moveSquare(const QPoint& diff)
 {
 	rectPos = lastRectPos + diff;
 
-	rectPos.rx() = std::clamp<int>(rectPos.x(), 0, (image.isNull() ? 800 : image.width()) - scale * 90);
-	rectPos.ry() = std::clamp<int>(rectPos.y(), 0, 500 - scale * 112);
+	rectPos.rx() = std::clamp<int>(rectPos.x(), 0, image.width() - rectScale * 92);
+	rectPos.ry() = std::clamp<int>(rectPos.y(), 0, image.height() - rectScale * 112);
 
 	update();
 }
 
 void MainWindow::scaleSquare(double val)
 {
-	scale += val;
+	rectScale += val;
+	rectScale = std::clamp<double>(rectScale, 1, std::min(image.width() / 92.0, image.height() / 112.0));
 
-	rectPos.rx() = std::clamp<int>(rectPos.x(), 0, (image.isNull() ? 800 : image.width()) - scale * 90);
-	rectPos.ry() = std::clamp<int>(rectPos.y(), 0, 500 - scale * 112);
-	scale = std::clamp<double>(scale, 1, 4);
+	rectPos.rx() = std::clamp<int>(rectPos.x(), 0, image.width() - rectScale * 92);
+	rectPos.ry() = std::clamp<int>(rectPos.y(), 0, image.height() - rectScale * 112);
 
 	update();
 }

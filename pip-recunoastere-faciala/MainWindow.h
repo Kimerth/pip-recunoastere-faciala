@@ -27,7 +27,7 @@ private:
 
 	QPoint lastRectPos;
 	QPoint rectPos = QPoint(0, 0);
-	double scale = 1;
+	double rectScale = 1;
 	QImage image;
 
 	void moveSquare(const QPoint& diff);
