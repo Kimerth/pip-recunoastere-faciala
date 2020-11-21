@@ -10,10 +10,28 @@ MainWindow::MainWindow()
 
 	graphicsView->setScene(&scene);
 
+	graphicsView->setMouseTracking(true);
+	graphicsView->installEventFilter(this);
+
 	connect(detectButton, &QPushButton::clicked, this, &MainWindow::detect);
 	connect(selectButton, &QPushButton::clicked, this, &MainWindow::select);
 	connect(this, &MainWindow::selected, filePath, &QLineEdit::setText);
 	connect(this, &MainWindow::selected, this, &MainWindow::displayImage);
+}
+
+bool MainWindow::eventFilter(QObject* obj, QEvent* event)
+{
+	if (obj != graphicsView)
+		return QMainWindow::eventFilter(obj, event);
+
+	auto t = event->type();
+
+	if (t == QEvent::MouseMove)
+	{
+		QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+		statusBar()->showMessage(QString("Mouse move (%1,%2)").arg(mouseEvent->pos().x()).arg(mouseEvent->pos().y()));
+	}
+	return false;
 }
 
 void MainWindow::mouseMoveEvent(QMouseEvent* e)
@@ -21,7 +39,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent* e)
 	if (e->button() == Qt::LeftButton && mousePressed)
 	{
 		auto diff = e->pos() - mousePos;
-		moveSquare(diff);
+		moveSquare(diff, 1);
 	}
 }
 

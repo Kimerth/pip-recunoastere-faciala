@@ -14,6 +14,8 @@ public:
 	void mouseReleaseEvent(QMouseEvent* e) override;
 	void wheelEvent(QWheelEvent* e) override;
 
+	bool eventFilter(QObject* obj, QEvent* event);
+
 public slots:
 	void detect();
 	void select();

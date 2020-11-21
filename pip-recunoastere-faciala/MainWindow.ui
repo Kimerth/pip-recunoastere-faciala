@@ -45,7 +45,7 @@
      <enum>Qt::ScrollBarAlwaysOff</enum>
     </property>
     <property name="interactive">
-     <bool>false</bool>
+     <bool>true</bool>
     </property>
    </widget>
    <widget class="QLineEdit" name="filePath">
