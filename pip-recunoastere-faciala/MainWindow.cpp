@@ -91,17 +91,19 @@ void MainWindow::detect()
 	cv::imshow("resized", img);
 #endif
 
+#ifndef NDEBUG
+	auto facialData = readData(40, 10, true);
+#else
 	auto facialData = readData(40, 10);
 	addImageTest(facialData, img);
+#endif
 
 	auto transformation = computeTransformation(facialData);
 	//draw_faces(transformation.W);
-	auto rez = test(facialData, transformation);
 
-	char x[32];
-	sprintf_s(x, "%f", rez);
-
-	QMessageBox::information(this, "Result", x);
+#ifndef NDEBUG
+	testRecognition(facialData, transformation);
+#endif // !NDEBUG
 }
 
 void MainWindow::select()

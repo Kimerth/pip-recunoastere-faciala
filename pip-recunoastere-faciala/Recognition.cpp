@@ -4,33 +4,39 @@
 #include <opencv2/highgui.hpp>
 
 
-FacialData readData(const int nClasses, const int nSamples, bool useTestData)
+FacialData readData(const int nClasses, const int nSamples, bool useTestData, int nIntruders)
 {
 	FacialData ret;
 	auto& [_, X, classes, X_test, classes_test] = ret;
-	ret.nClasses = nClasses;
+	ret.nClasses = (useTestData ? nClasses - nIntruders : nClasses);
 
 	std::vector<cv::Mat> images;
 	std::vector<cv::Mat> images_test;
 
-	for(int i = 1; i <= nClasses; ++i)
+	cv::Mat img;
+
+	auto readImage = [&](int cls, int sample)
 	{
 		char fname[128];
 
+		sprintf_s(fname, R"(Images\att\s%d\%d.pgm)", cls, sample);
+		//printf("%s\t", fname);
+
+		img = cv::imread(fname, cv::IMREAD_GRAYSCALE);
+
+		assert(img.rows == 112 && img.cols == 92);
+
+		img = img.reshape(1);
+		img.convertTo(img, CV_8U);
+	};
+
+	for(int i = 1; i <= ret.nClasses; ++i)
+	{
 		for (int j = 1; j <= nSamples; ++j) 
 		{
-			//TODO: take path as parameter
-			sprintf_s(fname, R"(Images\att\s%d\%d.pgm)", i, j);
-			//printf("%s\t", fname);
-
-			cv::Mat img = cv::imread(fname, cv::IMREAD_GRAYSCALE);
+			readImage(i, j);
 			
-			assert(img.rows == 112 && img.cols == 92);
-
-			img = img.reshape(1);
-			img.convertTo(img, CV_8U);
 			images.push_back(img);
-
 			classes.push_back(i - 1);
 
 			/*char debug[128];
@@ -61,6 +67,15 @@ FacialData readData(const int nClasses, const int nSamples, bool useTestData)
 
 	if (useTestData)
 	{
+		for (int i = nClasses - nIntruders + 1; i <= nClasses; ++i)
+			for (int j = 1; j <= nSamples; j++)
+			{
+				readImage(i, j);
+
+				images_test.push_back(img);
+				classes_test.push_back(i - 1);
+			}
+
 		/// flattens test images and copies them into the columns of X
 		X_test = cv::Mat(n, images_test.size(), CV_32F);
 		for (int i = 0; i < images_test.size(); ++i)
@@ -80,7 +95,7 @@ TransformationData computeTransformation(const FacialData& facialData)
 {
 	TransformationData ret;
 	const auto& [C, X, classes, X_test, classes_test] = facialData;
-	auto& [W, Y] = ret;
+	auto& [W, Y, Y_test, threshold] = ret;
 
 	//! calculates the class frequency
 	std::vector<int> classFreq;
@@ -220,6 +235,50 @@ TransformationData computeTransformation(const FacialData& facialData)
 #pragma endregion
 
 	W = Wpca * Wfld;
+	Y_test = W.t() * X_test;
+
+#pragma region computeThreshold
+
+	float FAR, FRR;
+	threshold = 1100; /// approximation from previous runs (for improved speed)
+	do
+	{
+		FAR = 0, FRR = 0;
+		for (int i = 0; i < Y_test.cols; ++i)
+		{
+			float min = std::numeric_limits<float>::max();
+			for (int j = 0; j < Y.cols; ++j)
+			{
+				//float cosineSimilarity = Y.col(j).dot(Y_test.col(i)) / (cv::norm(Y.col(j)) * cv::norm(Y_test.col(i)));
+				float dist = cv::norm(Y_test.col(i) - Y.col(j));
+				if (/*cosineSimilarity*/ dist < min)
+					min = /*cosineSimilarity*/ dist;
+			}
+
+			if (i < C && min > threshold)
+				FRR++;
+			else if (i > C && min < threshold)
+				FAR++;
+		}
+
+		FRR = FRR / C;
+		FAR = FAR / (Y_test.cols - C);
+
+		if (std::abs(FAR - FRR) < 1e-2)
+			break;
+
+		if (FRR > FAR)
+			threshold += 1;
+		else
+			threshold -= 1;
+
+	} while (std::abs(FAR - FRR) > 1e-2);
+
+#ifndef NDEBUG
+	printf("FRR: %.3f\tFAR: %.3f\n", FRR * 100, FAR * 100);
+#endif // !NDEBUG
+
+#pragma endregion
 
 	return ret;
 }
@@ -249,44 +308,95 @@ void draw_faces(const cv::Mat& W)
 	}
 }
 
-float test(const FacialData& facialData, const TransformationData& transformationData)
+void testRecognition(const FacialData& facialData, const TransformationData& transformationData)
 {
 	const auto& [nClasses, X, classes, X_test, classes_test] = facialData;
-	const auto& [W, Y] = transformationData;
+	const auto& [W, Y, Y_test, threshold] = transformationData;
 
-	cv::Mat Y_test = W.t() * X_test;
-	
+	assert(classes_test.size() == Y_test.cols);
+
 	std::vector<int> closest;
+	closest.resize(Y_test.cols);
 	std::vector<float> distances;
 	distances.resize(Y_test.cols);
-	closest.resize(Y_test.cols);
+
 
 	for (int i = 0; i < Y_test.cols; ++i) 
 	{
+#ifndef NDEBUG
+		float minClasa = std::numeric_limits<float>::max();
+#endif // !NDEBUG
 		float min_dist = std::numeric_limits<float>::max();
 		for (int j = 0; j < Y.cols; ++j) 
 		{
 			float dist = cv::norm(Y_test.col(i) - Y.col(j));
-			if (dist < min_dist) {
+#ifndef NDEBUG
+			if (dist < minClasa)
+				minClasa = dist;
+#endif // !NDEBUG
+			if (dist < min_dist) 
+			{
 				min_dist = dist;
 				closest[i] = j;
 			}
+
+#ifndef NDEBUG
+			//if (j % 9 == 0 && j > 0)
+			//{
+			//	printf("min pt clasa %d : %lf\n", j / 9, minClasa);
+			//	minClasa = std::numeric_limits<float>::max();
+			//}
+#endif // !NDEBUG
 		}
 		distances[i] = min_dist;
 	}
 
-	if (classes_test.size() == Y_test.cols)
+	int cnt = 0;
+	for (int i = 0; i < Y_test.cols; ++i)
 	{
-		int cnt = 0;
-		for (int i = 0; i < Y_test.cols; ++i)
-			if (classes[closest[i]] == classes_test[i])
-				cnt++;
+#ifndef  NDEBUG
+		printf("predicted: %d true: %d min distance: %f\n", classes[closest[i]], classes_test[i], distances[i]);
+#endif // ! NDEBUG
 
-		return (static_cast<float>(cnt) / Y_test.cols) * 100;
+		if (distances[i] < threshold && classes[closest[i]] == classes_test[i])
+			cnt++;
 	}
-	else
-		return distances[0];
+
+	printf("Recognition accuracy: %.3f\n", (static_cast<float>(cnt) / nClasses) * 100);
 }
+
+//void testAuthentication(const FacialData & facialData, const TransformationData & transformationData)
+//{
+//	const auto&[nClasses, X, classes, X_test, classes_test] = facialData;
+//	const auto&[W, Y, Y_test, threshold] = transformationData;
+//
+//	assert(classes_test.size() == Y_test.cols);
+//
+//	float FAR = 0, FRR = 0;
+//
+//	for (int i = 0; i < Y_test.cols; ++i)
+//	{
+//		float min = std::numeric_limits<float>::max();
+//		for (int j = 0; j < Y.cols; ++j)
+//		{
+//			float cosineSimilarity = Y.col(j).dot(Y_test.col(i)) / (cv::norm(Y.col(j)) * cv::norm(Y_test.col(i)));
+//			if (cosineSimilarity < min)
+//				min = cosineSimilarity;
+//		}
+//
+//		printf("%d\t%f\n", i, min);
+//
+//		if (i < nClasses && min > threshold)
+//			FRR++;
+//		else if (i > nClasses && min < threshold)
+//			FAR++;
+//	}
+//
+//	FRR = FRR / nClasses * 100;
+//	FAR = FAR / (Y_test.cols - nClasses) * 100;
+//
+//	printf("FRR: %f\tFAR: %f", FRR, FAR);
+//}
 
 //cv::Mat softmax(cv::Mat in)
 //{

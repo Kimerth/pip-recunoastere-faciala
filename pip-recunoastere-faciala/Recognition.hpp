@@ -28,6 +28,10 @@ struct TransformationData
 	cv::Mat W;
 	/// Transformed space
 	cv::Mat Y;
+	/// Transformed test space
+	cv::Mat Y_test;
+	/// Acceptance threshold
+	float threshold;
 };
 
 /*
@@ -36,11 +40,12 @@ struct TransformationData
 	\param classes			Number of classes.
 	\param nSample			Number of samples per class.
 	\param useTestData		Randomly pick images from the training set for the test set (for testing the accuracy of the algorithm)
+	\param nIntruders		Number of subjects to consider as intruders
 	\returns				Facial data read from disk
 
 	\see struct FacialData
 */
-FacialData readData(int nClasses, int nSamples, bool useTestData = false);
+FacialData readData(int nClasses, int nSamples, bool useTestData = false, int nIntruders = 10);
 
 /*
 	\brief Flatten image and place it into X_test as a column
@@ -57,7 +62,11 @@ void addImageTest(FacialData& facialData, cv::Mat& img);
 	
 	https://cseweb.ucsd.edu/classes/wi14/cse152-a/fisherface-pami97.pdf
 
-	\param facialData		Input facial data to compute transformation
+	Computes the reduced dimensionality matrices for train and test data
+
+	Calculates the threshold so that FRR = FAR, where FRR is False Rejection Rate and FAR is False Acceptance Rate
+
+	\param facialData		Input facial data to compute transformation (it should contain images in test data)
 	\returns				Output transformation data
 
 	\see FacialData
@@ -78,14 +87,16 @@ void draw_faces(const cv::Mat& W);
 	Will apply the transformation matrix onto the test matrix and then for each image vector it will find the closest train image vector and check if it corresponds to the actual train class.
 	Prints the resulting accuracy in console.
 
+	It should be called in debug.
+
 	\param facialData - Input facial data
 	\param transformationData - Input transformation data
-
-	\returns Accuracy of guesses, procentual
 
 	\see FacialData
 	\see TransformationData
 */
-float test(const FacialData& facialData, const TransformationData& transformationData);
+void testRecognition(const FacialData& facialData, const TransformationData& transformationData);
+
+//void testAuthentication(const FacialData& facialData, const TransformationData& transformationData);
 
 //cv::Mat softmax(cv::Mat in);
