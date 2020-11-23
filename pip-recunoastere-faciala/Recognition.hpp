@@ -48,16 +48,6 @@ struct TransformationData
 FacialData readData(int nClasses, int nSamples, bool useTestData = false, int nIntruders = 10);
 
 /*
-	\brief Flatten image and place it into X_test as a column
-
-	\param facialData		Facial data to change
-	\param img				Image to add to test matrix
-
-	\see struct FacialData
-*/
-void addImageTest(FacialData& facialData, cv::Mat& img);
-
-/*
 	\brief Computes the matrix used to represent the input data by finding a subspace which represents most of the data variance
 	
 	https://cseweb.ucsd.edu/classes/wi14/cse152-a/fisherface-pami97.pdf
@@ -80,6 +70,8 @@ TransformationData computeTransformation(const FacialData& facialData);
 	\param W				Input transformation matrix.
 */
 void draw_faces(const cv::Mat& W);
+
+int authenticate(const FacialData& facialData, const TransformationData& transformationData, const cv::Mat& img);
 
 /*
 	\brief Utility to test the accuracy of this algorithm on the previously given dataset

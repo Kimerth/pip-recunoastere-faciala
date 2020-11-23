@@ -85,10 +85,19 @@ FacialData readData(const int nClasses, const int nSamples, bool useTestData, in
 	return ret;
 }
 
-void addImageTest(FacialData& facialData, cv::Mat & img)
+void computeDistance(const cv::Mat& Y_test, const cv::Mat& Y_train, const int idx, float& retDist, int& retClass)
 {
-	facialData.X_test = cv::Mat(img.rows * img.cols, 1, CV_32F);
-	img.reshape(1, img.rows * img.cols).copyTo(facialData.X_test.col(0));
+	retDist = std::numeric_limits<float>::max();
+	for (int j = 0; j < Y_train.cols; ++j)
+	{
+		//float cosineSimilarity = Y.col(j).dot(Y_test.col(i)) / (cv::norm(Y.col(j)) * cv::norm(Y_test.col(i)));
+		float dist = cv::norm(Y_test.col(idx) - Y_train.col(j));
+		if (/*cosineSimilarity*/ dist < retDist)
+		{
+			retDist = /*cosineSimilarity*/ dist;
+			retClass = j;
+		}
+	}
 }
 
 TransformationData computeTransformation(const FacialData& facialData)
@@ -246,18 +255,13 @@ TransformationData computeTransformation(const FacialData& facialData)
 		FAR = 0, FRR = 0;
 		for (int i = 0; i < Y_test.cols; ++i)
 		{
-			float min = std::numeric_limits<float>::max();
-			for (int j = 0; j < Y.cols; ++j)
-			{
-				//float cosineSimilarity = Y.col(j).dot(Y_test.col(i)) / (cv::norm(Y.col(j)) * cv::norm(Y_test.col(i)));
-				float dist = cv::norm(Y_test.col(i) - Y.col(j));
-				if (/*cosineSimilarity*/ dist < min)
-					min = /*cosineSimilarity*/ dist;
-			}
+			float dist;
+			int cls;
+			computeDistance(Y_test, Y, i, dist, cls);
 
-			if (i < C && min > threshold)
+			if (i < C && dist > threshold)
 				FRR++;
-			else if (i > C && min < threshold)
+			else if (i > C && dist < threshold)
 				FAR++;
 		}
 
@@ -306,6 +310,21 @@ void draw_faces(const cv::Mat& W)
 		cv::imshow("test", aux);
 		cv::waitKey();
 	}
+}
+
+int authenticate(const FacialData& facialData, const TransformationData& transformationData, const cv::Mat& img)
+{
+	cv::Mat X_img = cv::Mat(img.rows * img.cols, 1, CV_32F);
+
+	img.reshape(1, img.rows * img.cols).copyTo(X_img.col(0));
+
+	cv::Mat Y_img = transformationData.W.t() * X_img;
+
+	float dist;
+	int cls;
+	computeDistance(Y_img, transformationData.Y, 0, dist, cls);
+
+	return (dist > transformationData.threshold ? -1 : cls);
 }
 
 void testRecognition(const FacialData& facialData, const TransformationData& transformationData)

@@ -25,7 +25,7 @@ private:
 	QPoint mousePos;
 	bool mousePressed;
 
-	QPoint lastRectPos;
+	QPoint lastRectPos = QPoint(0, 0);
 	QPoint rectPos = QPoint(0, 0);
 	double rectScale = 1;
 	QImage image;

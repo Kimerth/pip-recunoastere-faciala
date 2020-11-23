@@ -91,15 +91,19 @@ void MainWindow::detect()
 	cv::imshow("resized", img);
 #endif
 
-#ifndef NDEBUG
 	auto facialData = readData(40, 10, true);
-#else
-	auto facialData = readData(40, 10);
-	addImageTest(facialData, img);
-#endif
-
 	auto transformation = computeTransformation(facialData);
 	//draw_faces(transformation.W);
+
+	int rez = authenticate(facialData, transformation, img);
+
+	char x[32];
+	if (rez >= 0)
+		sprintf_s(x, "Acceptat Id:%d", rez);
+	else
+		sprintf_s(x, "Refuzat");
+
+	QMessageBox::information(this, "Result", x);
 
 #ifndef NDEBUG
 	testRecognition(facialData, transformation);
