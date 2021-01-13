@@ -91,7 +91,11 @@ void computeDistance(const cv::Mat& Y_test, const cv::Mat& Y_train, const int id
 	for (int j = 0; j < Y_train.cols; ++j)
 	{
 		//float cosineSimilarity = Y.col(j).dot(Y_test.col(i)) / (cv::norm(Y.col(j)) * cv::norm(Y_test.col(i)));
-		float dist = cv::norm(Y_test.col(idx) - Y_train.col(j));
+		float ab = Y_train.col(j).dot(Y_test.col(idx));
+		float aa = Y_train.col(j).dot(Y_train.col(j));
+		float bb = Y_test.col(idx).dot(Y_test.col(idx));
+		//float dist = cv::norm(Y_test.col(idx) - Y_train.col(j));
+		float dist = -ab / sqrt(aa * bb);
 		if (/*cosineSimilarity*/ dist < retDist)
 		{
 			retDist = /*cosineSimilarity*/ dist;
@@ -248,35 +252,48 @@ TransformationData computeTransformation(const FacialData& facialData)
 
 #pragma region computeThreshold
 
-	float FAR, FRR;
-	threshold = 1100; /// approximation from previous runs (for improved speed)
-	do
-	{
-		FAR = 0, FRR = 0;
-		for (int i = 0; i < Y_test.cols; ++i)
-		{
-			float dist;
-			int cls;
-			computeDistance(Y_test, Y, i, dist, cls);
+	std::vector<float> accDistances;
+	accDistances.resize(C);
+	std::vector<float> rejDistances;
+	rejDistances.resize(Y_test.cols - C);
 
-			if (i < C && dist > threshold)
-				FRR++;
-			else if (i > C && dist < threshold)
-				FAR++;
+	float dist;
+	int cls;
+	for (int i = 0; i < C; ++i)
+	{
+		computeDistance(Y_test, Y, i, dist, cls);
+		accDistances[i] = dist;
+	}
+	for (int i = C; i < Y_test.cols; ++i)
+	{
+		computeDistance(Y_test, Y, i, dist, cls);
+		rejDistances[i - C] = dist;
+	}
+
+	std::stable_sort(accDistances.begin(), accDistances.end());
+	std::stable_sort(rejDistances.begin(), rejDistances.end());
+
+	float FAR, FRR;
+	float minDist = std::numeric_limits<float>::max();
+	int minIdx;
+	while (accDistances[C - FAR - 1] > rejDistances[FRR])
+	{
+		dist = accDistances[C - FAR - 1] - rejDistances[FRR];
+		if (abs(minDist) > abs(dist))
+		{
+			minDist = dist;
+			minIdx = FRR;
 		}
 
-		FRR = FRR / C;
-		FAR = FAR / (Y_test.cols - C);
+		FAR++;
+		while (FRR / C < FAR / (Y_test.cols - C))
+			FRR++;
+	}
 
-		if (std::abs(FAR - FRR) < 1e-2)
-			break;
+	threshold = rejDistances[minIdx] - minDist / 2;
 
-		if (FRR > FAR)
-			threshold += 1;
-		else
-			threshold -= 1;
-
-	} while (std::abs(FAR - FRR) > 1e-2);
+	FRR = FRR / C;
+	FAR = FAR / (Y_test.cols - C);
 
 #ifndef NDEBUG
 	printf("FRR: %.3f\tFAR: %.3f\n", FRR * 100, FAR * 100);
