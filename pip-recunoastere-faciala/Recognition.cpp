@@ -85,21 +85,35 @@ FacialData readData(const int nClasses, const int nSamples, bool useTestData, in
 	return ret;
 }
 
-void computeDistance(const cv::Mat& Y_test, const cv::Mat& Y_train, const int idx, float& retDist, int& retClass)
+float cosineSimilarity(const cv::Mat A, const cv::Mat B)
+{
+	float ab = A.dot(B);
+	float aa = A.dot(A);
+	float bb = B.dot(B);
+	return -ab / sqrt(aa * bb);
+}
+
+void computeDistance(const cv::Mat& Y_test, const cv::Mat& Y_train, const int idx, float& retDist)
 {
 	retDist = std::numeric_limits<float>::max();
 	for (int j = 0; j < Y_train.cols; ++j)
 	{
-		//float cosineSimilarity = Y.col(j).dot(Y_test.col(i)) / (cv::norm(Y.col(j)) * cv::norm(Y_test.col(i)));
-		float ab = Y_train.col(j).dot(Y_test.col(idx));
-		float aa = Y_train.col(j).dot(Y_train.col(j));
-		float bb = Y_test.col(idx).dot(Y_test.col(idx));
-		//float dist = cv::norm(Y_test.col(idx) - Y_train.col(j));
-		float dist = -ab / sqrt(aa * bb);
-		if (/*cosineSimilarity*/ dist < retDist)
+		float dist = cosineSimilarity(Y_train.col(j), Y_test.col(idx));
+		if (dist < retDist)
+			retDist = dist;
+	}
+}
+
+void computeDistance(const cv::Mat& Y_test, const cv::Mat& Y_train,const std::vector<int> classes, const int idx, float& retDist, int& retClass)
+{
+	retDist = std::numeric_limits<float>::max();
+	for (int j = 0; j < Y_train.cols; ++j)
+	{
+		float dist = cosineSimilarity(Y_train.col(j), Y_test.col(idx));
+		if (dist < retDist)
 		{
-			retDist = /*cosineSimilarity*/ dist;
-			retClass = j;
+			retDist = dist;
+			retClass = classes[j];
 		}
 	}
 }
@@ -258,15 +272,14 @@ TransformationData computeTransformation(const FacialData& facialData)
 	rejDistances.resize(Y_test.cols - C);
 
 	float dist;
-	int cls;
 	for (int i = 0; i < C; ++i)
 	{
-		computeDistance(Y_test, Y, i, dist, cls);
+		computeDistance(Y_test, Y, i, dist);
 		accDistances[i] = dist;
 	}
 	for (int i = C; i < Y_test.cols; ++i)
 	{
-		computeDistance(Y_test, Y, i, dist, cls);
+		computeDistance(Y_test, Y, i, dist);
 		rejDistances[i - C] = dist;
 	}
 
@@ -336,7 +349,7 @@ int authenticate(const FacialData& facialData, const TransformationData& transfo
 
 	float dist;
 	int cls;
-	computeDistance(Y_img, transformationData.Y, 0, dist, cls);
+	computeDistance(Y_img, transformationData.Y, facialData.classes, 0, dist, cls);
 
 	return (dist > transformationData.threshold ? -1 : cls);
 }
