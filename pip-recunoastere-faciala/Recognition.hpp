@@ -37,15 +37,11 @@ struct TransformationData
 /*
 	\brief Loads train data and test data from disk.
 
-	\param classes			Number of classes.
-	\param nSample			Number of samples per class.
-	\param useTestData		Randomly pick images from the training set for the test set (for testing the accuracy of the algorithm)
-	\param nIntruders		Number of subjects to consider as intruders
 	\returns				Facial data read from disk
 
 	\see struct FacialData
 */
-FacialData readData(int nClasses, int nSamples, bool useTestData = false, int nIntruders = 10);
+FacialData readData();
 
 /*
 	\brief Computes the matrix used to represent the input data by finding a subspace which represents most of the data variance

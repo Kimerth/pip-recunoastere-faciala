@@ -79,7 +79,7 @@ void MainWindow::detect()
 		return;
 	}
 
-	srand(time(NULL));
+	//srand(time(NULL));
 
 	cv::Mat img = cv::imread(filePath->text().toStdString().data(), cv::IMREAD_GRAYSCALE);
 
@@ -91,7 +91,7 @@ void MainWindow::detect()
 	cv::imshow("resized", img);
 #endif
 
-	auto facialData = readData(40, 10, true);
+	auto facialData = readData();
 	auto transformation = computeTransformation(facialData);
 	//draw_faces(transformation.W);
 

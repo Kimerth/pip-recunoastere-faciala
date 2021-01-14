@@ -2,85 +2,92 @@
 #include <limits>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
+#include <filesystem>
 
+namespace fs = std::filesystem;
 
-FacialData readData(const int nClasses, const int nSamples, bool useTestData, int nIntruders)
+FacialData readData()
 {
 	FacialData ret;
-	auto& [_, X, classes, X_test, classes_test] = ret;
-	ret.nClasses = (useTestData ? nClasses - nIntruders : nClasses);
 
 	std::vector<cv::Mat> images;
 	std::vector<cv::Mat> images_test;
 
-	cv::Mat img;
-
-	auto readImage = [&](int cls, int sample)
+	auto readImage = [&](const fs::path& path) -> cv::Mat
 	{
-		char fname[128];
-
-		sprintf_s(fname, R"(Images\att\s%d\%d.pgm)", cls, sample);
-		//printf("%s\t", fname);
-
-		img = cv::imread(fname, cv::IMREAD_GRAYSCALE);
+		auto img = cv::imread(path.generic_u8string(), cv::IMREAD_GRAYSCALE);
 
 		assert(img.rows == 112 && img.cols == 92);
 
 		img = img.reshape(1);
 		img.convertTo(img, CV_8U);
+
+		return img;
 	};
 
-	for(int i = 1; i <= ret.nClasses; ++i)
+	auto path = fs::current_path();
+	auto accepted_path = path / "accepted";
+	auto rejected_path = path / "rejected";
+
+	ret.nClasses = 0;
+	int nSamples = 0;
+	for (const auto& folder : fs::directory_iterator(accepted_path))
 	{
-		for (int j = 1; j <= nSamples; ++j) 
-		{
-			readImage(i, j);
-			
-			images.push_back(img);
-			classes.push_back(i - 1);
+		std::vector<cv::Mat> accepted_images;
 
-			/*char debug[128];
-			sprintf_s(debug, "raw face class: %d img: %d", i, j);
-			printf("%d\n", (i - 1) * nSamples + j - 1);
-			cv::imshow(debug, images[(i - 1) * nSamples + j - 1]);*/
-		}
+		for (const auto& accepted : fs::directory_iterator(folder))
+			accepted_images.push_back(readImage(accepted));
 
-		if (useTestData)
+		if (nSamples > 0)
+			assert(nSamples == accepted_images.size());
+		else
+			nSamples = accepted_images.size();
+
+		auto index = rand() % accepted_images.size();
+
+		for (int i = 0; i < accepted_images.size(); i++)
+			if (i != index)
+			{
+				images.push_back(accepted_images[i]);
+				ret.classes.push_back(ret.nClasses);
+			}
+			else
+			{
+				images_test.push_back(accepted_images[i]);
+				ret.classes_test.push_back(ret.nClasses);
+			}
+
+		ret.nClasses++;
+	}
+
+	assert(nSamples > 0);
+
+	for (const auto& file : fs::directory_iterator(rejected_path))
+	{
+		if (file.is_directory())
+			for (const auto& image : fs::directory_iterator(file))
+			{
+				images_test.push_back(readImage(image));
+				ret.classes_test.push_back(ret.nClasses); // hacky
+			}
+		else
 		{
-			/// randomly picks an image from the train set and moves it to the test set
-			int rnd = rand() % nSamples;
-			int idx = (i - 1) * (nSamples - 1) + rnd;
-			images_test.push_back(images[idx]);
-			classes_test.push_back(classes[idx]);
-			images.erase(images.begin() + idx);
-			classes.erase(classes.begin() + idx);
+			images_test.push_back(readImage(file));
+			ret.classes_test.push_back(ret.nClasses); // hacky
 		}
-		//cv::waitKey();
 	}
 	
 	int n = images[0].total();
 
 	/// flattens train images and copies them into the columns of X
-	X = cv::Mat(n, images.size(), CV_32F);
+	ret.X = cv::Mat(n, images.size(), CV_32F);
 	for (int i = 0; i < images.size(); ++i)
-		images[i].reshape(1, n).copyTo(X.col(i));
+		images[i].reshape(1, n).copyTo(ret.X.col(i));
 
-	if (useTestData)
-	{
-		for (int i = nClasses - nIntruders + 1; i <= nClasses; ++i)
-			for (int j = 1; j <= nSamples; j++)
-			{
-				readImage(i, j);
-
-				images_test.push_back(img);
-				classes_test.push_back(i - 1);
-			}
-
-		/// flattens test images and copies them into the columns of X
-		X_test = cv::Mat(n, images_test.size(), CV_32F);
-		for (int i = 0; i < images_test.size(); ++i)
-			images_test[i].reshape(1, n).copyTo(X_test.col(i));
-	}
+	/// flattens test images and copies them into the columns of X
+	ret.X_test = cv::Mat(n, images_test.size(), CV_32F);
+	for (int i = 0; i < images_test.size(); ++i)
+		images_test[i].reshape(1, n).copyTo(ret.X_test.col(i));
 
 	return ret;
 }
