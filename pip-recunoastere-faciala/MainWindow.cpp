@@ -6,7 +6,6 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include "MainWindow.h"
-#include "Recognition.hpp"
 
 MainWindow::MainWindow()
 {
@@ -18,6 +17,10 @@ MainWindow::MainWindow()
 	connect(selectButton, &QPushButton::clicked, this, &MainWindow::select);
 	connect(this, &MainWindow::selected, filePath, &QLineEdit::setText);
 	connect(this, &MainWindow::selected, this, &MainWindow::displayImage);
+
+	facialData = readData();
+	transformation = computeTransformation(facialData);
+	//draw_faces(transformation.W);
 }
 
 bool MainWindow::eventFilter(QObject* obj, QEvent* event)
@@ -90,10 +93,6 @@ void MainWindow::detect()
 #ifndef NDEBUG
 	cv::imshow("resized", img);
 #endif
-
-	auto facialData = readData();
-	auto transformation = computeTransformation(facialData);
-	//draw_faces(transformation.W);
 
 	int rez = authenticate(facialData, transformation, img);
 
