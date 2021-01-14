@@ -389,14 +389,6 @@ void testRecognition(const FacialData& facialData, const TransformationData& tra
 				min_dist = dist;
 				closest[i] = j;
 			}
-
-#ifndef NDEBUG
-			//if (j % 9 == 0 && j > 0)
-			//{
-			//	printf("min pt clasa %d : %lf\n", j / 9, minClasa);
-			//	minClasa = std::numeric_limits<float>::max();
-			//}
-#endif // !NDEBUG
 		}
 		distances[i] = min_dist;
 	}
@@ -414,53 +406,3 @@ void testRecognition(const FacialData& facialData, const TransformationData& tra
 
 	printf("Recognition accuracy: %.3f\n", (static_cast<float>(cnt) / nClasses) * 100);
 }
-
-//void testAuthentication(const FacialData & facialData, const TransformationData & transformationData)
-//{
-//	const auto&[nClasses, X, classes, X_test, classes_test] = facialData;
-//	const auto&[W, Y, Y_test, threshold] = transformationData;
-//
-//	assert(classes_test.size() == Y_test.cols);
-//
-//	float FAR = 0, FRR = 0;
-//
-//	for (int i = 0; i < Y_test.cols; ++i)
-//	{
-//		float min = std::numeric_limits<float>::max();
-//		for (int j = 0; j < Y.cols; ++j)
-//		{
-//			float cosineSimilarity = Y.col(j).dot(Y_test.col(i)) / (cv::norm(Y.col(j)) * cv::norm(Y_test.col(i)));
-//			if (cosineSimilarity < min)
-//				min = cosineSimilarity;
-//		}
-//
-//		printf("%d\t%f\n", i, min);
-//
-//		if (i < nClasses && min > threshold)
-//			FRR++;
-//		else if (i > nClasses && min < threshold)
-//			FAR++;
-//	}
-//
-//	FRR = FRR / nClasses * 100;
-//	FAR = FAR / (Y_test.cols - nClasses) * 100;
-//
-//	printf("FRR: %f\tFAR: %f", FRR, FAR);
-//}
-
-//cv::Mat softmax(cv::Mat in)
-//{
-//	cv::Mat rez;
-//	double min, max;
-//	cv::minMaxIdx(in, &min, &max);
-//	
-//	double maxabs = std::max(std::abs(min), std::abs(max));
-//
-//	cv::exp(in / maxabs, rez);
-//
-//	double sum = *cv::sum(rez).val;
-//
-//	rez.mul (1 / sum);
-//
-//	return rez;
-//}
