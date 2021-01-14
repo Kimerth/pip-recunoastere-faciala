@@ -1,6 +1,5 @@
 #include <opencv2/core.hpp>
 #include <vector>
-#include "Image.hpp"
 
 /*
 	\brief Training and testing data

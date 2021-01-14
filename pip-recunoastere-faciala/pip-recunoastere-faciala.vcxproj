@@ -11,12 +11,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AbstractViewer.cpp" />
-    <ClCompile Include="HistogramViewer.cpp" />
-    <ClCompile Include="Image.cpp" />
-    <ClCompile Include="ImageGrid.cpp" />
-    <ClCompile Include="ImageGridCell.cpp" />
-    <ClCompile Include="ImageViewer.cpp" />
     <ClCompile Include="main.cpp">
       <DynamicSource Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">input</DynamicSource>
       <QtMocFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).moc</QtMocFileName>
@@ -25,19 +19,10 @@
     </ClCompile>
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="Recognition.cpp" />
-    <ClCompile Include="Vec2.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AbstractViewer.h" />
-    <ClInclude Include="HistogramViewer.h" />
-    <ClInclude Include="Image.hpp" />
-    <ClInclude Include="ImageGrid.h" />
-    <ClInclude Include="ImageGridCell.h" />
-    <ClInclude Include="ImageViewer.h" />
     <QtMoc Include="MainWindow.h" />
-    <ClInclude Include="operatii.h" />
     <ClInclude Include="Recognition.hpp" />
-    <ClInclude Include="Vec2.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
