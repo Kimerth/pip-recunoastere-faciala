@@ -273,7 +273,7 @@ TransformationData computeTransformation(const FacialData& facialData)
 	std::stable_sort(accDistances.begin(), accDistances.end());
 	std::stable_sort(rejDistances.begin(), rejDistances.end());
 
-	float FAR, FRR;
+	int FAR = 0, FRR = 0;
 	float minDist = std::numeric_limits<float>::max();
 	int minIdx;
 	while (accDistances[C - FAR - 1] > rejDistances[FRR])
@@ -286,17 +286,14 @@ TransformationData computeTransformation(const FacialData& facialData)
 		}
 
 		FAR++;
-		while (FRR / C < FAR / (Y_test.cols - C))
+		while (static_cast<float>(FRR) / C < static_cast<float>(FAR) / (Y_test.cols - C))
 			FRR++;
 	}
 
 	threshold = rejDistances[minIdx] - minDist / 2;
 
-	FRR = FRR / C;
-	FAR = FAR / (Y_test.cols - C);
-
 #ifndef NDEBUG
-	printf("FRR: %.3f\tFAR: %.3f\n", FRR * 100, FAR * 100);
+	printf("FRR: %.3f\tFAR: %.3f\n", (static_cast<float>(FRR) / C) * 100, (static_cast<float>(FAR) / (Y_test.cols - C)) * 100);
 #endif // !NDEBUG
 
 #pragma endregion
@@ -365,7 +362,11 @@ void testRecognition(const FacialData& facialData, const TransformationData& tra
 		float min_dist = std::numeric_limits<float>::max();
 		for (int j = 0; j < Y.cols; ++j) 
 		{
-			float dist = cv::norm(Y_test.col(i) - Y.col(j));
+			//float dist = cv::norm(Y_test.col(i) - Y.col(j));
+			float ab = Y.col(j).dot(Y_test.col(i));
+			float aa = Y.col(j).dot(Y.col(j));
+			float bb = Y_test.col(i).dot(Y_test.col(i));
+			float dist = -ab / sqrt(aa * bb);
 #ifndef NDEBUG
 			if (dist < minClasa)
 				minClasa = dist;
@@ -394,7 +395,7 @@ void testRecognition(const FacialData& facialData, const TransformationData& tra
 		printf("predicted: %d true: %d min distance: %f\n", classes[closest[i]], classes_test[i], distances[i]);
 #endif // ! NDEBUG
 
-		if (distances[i] < threshold && classes[closest[i]] == classes_test[i])
+		if (i <= 30 && classes[closest[i]] == classes_test[i])
 			cnt++;
 	}
 
