@@ -95,29 +95,26 @@ FacialData readData()
 
 float cosineSimilarity(const cv::Mat A, const cv::Mat B)
 {
-	float ab = A.dot(B);
-	float aa = A.dot(A);
-	float bb = B.dot(B);
-	return -ab / sqrt(aa * bb);
+	return 1 - A.dot(B) / (cv::norm(A) * cv::norm(B));
 }
 
-void computeDistance(const cv::Mat& Y_test, const cv::Mat& Y_train, const int idx, float& retDist)
+void computeDistance(const cv::Mat& Y_test, const cv::Mat& Y_train, const int idx, double& retDist)
 {
-	retDist = std::numeric_limits<float>::max();
+	retDist = 1;
 	for (int j = 0; j < Y_train.cols; ++j)
 	{
-		float dist = cosineSimilarity(Y_train.col(j), Y_test.col(idx));
+		double dist = cosineSimilarity(Y_train.col(j), Y_test.col(idx));
 		if (dist < retDist)
 			retDist = dist;
 	}
 }
 
-void computeDistance(const cv::Mat& Y_test, const cv::Mat& Y_train,const std::vector<int> classes, const int idx, float& retDist, int& retClass)
+void computeDistance(const cv::Mat& Y_test, const cv::Mat& Y_train,const std::vector<int> classes, const int idx, double& retDist, int& retClass)
 {
-	retDist = std::numeric_limits<float>::max();
+	retDist = 1;
 	for (int j = 0; j < Y_train.cols; ++j)
 	{
-		float dist = cosineSimilarity(Y_train.col(j), Y_test.col(idx));
+		double dist = cosineSimilarity(Y_train.col(j), Y_test.col(idx));
 		if (dist < retDist)
 		{
 			retDist = dist;
@@ -279,7 +276,7 @@ TransformationData computeTransformation(const FacialData& facialData)
 	std::vector<float> rejDistances;
 	rejDistances.resize(Y_test.cols - C);
 
-	float dist;
+	double dist;
 	for (int i = 0; i < C; ++i)
 	{
 		computeDistance(Y_test, Y, i, dist);
@@ -295,7 +292,7 @@ TransformationData computeTransformation(const FacialData& facialData)
 	std::stable_sort(rejDistances.begin(), rejDistances.end());
 
 	int FAR = 0, FRR = 0;
-	float minDist = std::numeric_limits<float>::max();
+	double minDist = 1;
 	int minIdx;
 	while (accDistances[C - FAR - 1] > rejDistances[FRR])
 	{
@@ -355,7 +352,7 @@ int authenticate(const FacialData& facialData, const TransformationData& transfo
 
 	cv::Mat Y_img = transformationData.W.t() * X_img;
 
-	float dist;
+	double dist;
 	int cls;
 	computeDistance(Y_img, transformationData.Y, facialData.classes, 0, dist, cls);
 
@@ -377,38 +374,21 @@ void testRecognition(const FacialData& facialData, const TransformationData& tra
 
 	for (int i = 0; i < Y_test.cols; ++i) 
 	{
-#ifndef NDEBUG
-		float minClasa = std::numeric_limits<float>::max();
-#endif // !NDEBUG
-		float min_dist = std::numeric_limits<float>::max();
-		for (int j = 0; j < Y.cols; ++j) 
-		{
-			//float dist = cv::norm(Y_test.col(i) - Y.col(j));
-			float ab = Y.col(j).dot(Y_test.col(i));
-			float aa = Y.col(j).dot(Y.col(j));
-			float bb = Y_test.col(i).dot(Y_test.col(i));
-			float dist = -ab / sqrt(aa * bb);
-#ifndef NDEBUG
-			if (dist < minClasa)
-				minClasa = dist;
-#endif // !NDEBUG
-			if (dist < min_dist) 
-			{
-				min_dist = dist;
-				closest[i] = j;
-			}
-		}
-		distances[i] = min_dist;
+		double dist;
+		int cls;
+		computeDistance(Y_test, Y, classes, i, dist, cls);
+		distances[i] = dist;
+		closest[i] = cls;
 	}
 
 	int cnt = 0;
 	for (int i = 0; i < Y_test.cols; ++i)
 	{
 #ifndef  NDEBUG
-		printf("predicted: %d true: %d min distance: %f\n", classes[closest[i]], classes_test[i], distances[i]);
+		printf("predicted: %d true: %d min distance: %f\n", closest[i], classes_test[i], distances[i]);
 #endif // ! NDEBUG
 
-		if (i <= 30 && classes[closest[i]] == classes_test[i])
+		if (i <= 30 && closest[i] == classes_test[i])
 			cnt++;
 	}
 

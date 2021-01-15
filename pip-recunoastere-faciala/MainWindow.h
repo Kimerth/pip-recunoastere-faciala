@@ -2,6 +2,7 @@
 #include "ui_MainWindow.h"
 #include <QMouseEvent>
 #include <QWheelEvent>
+#include "Recognition.hpp"
 
 class MainWindow : public QMainWindow, private Ui_MainWindow
 {
@@ -21,6 +22,9 @@ signals:
 	void selected(QString&);
 
 private:
+	
+	FacialData facialData;
+	TransformationData transformation;
 
 	QPoint mousePos;
 	bool mousePressed;
