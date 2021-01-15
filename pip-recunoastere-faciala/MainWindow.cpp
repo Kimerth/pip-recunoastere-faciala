@@ -97,9 +97,9 @@ void MainWindow::detect()
 
 	int rez = authenticate(facialData, transformation, img);
 
-	char x[32];
+	char x[64];
 	if (rez >= 0)
-		sprintf_s(x, "Acceptat Id:%d", rez);
+		sprintf_s(x, "Acceptat, Id: %s", facialData.class_names[rez].data());
 	else
 		sprintf_s(x, "Refuzat");
 

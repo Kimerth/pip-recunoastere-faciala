@@ -17,6 +17,8 @@ struct FacialData
 	cv::Mat X_test;
 	/// test classes - Contains the respective class for each column in the test matrix.
 	std::vector<int> classes_test;
+	/// class names - Contains the folder's name for each class id
+	std::vector<std::string> class_names;
 };
 
 /*

@@ -58,6 +58,7 @@ FacialData readData()
 			}
 
 		ret.nClasses++;
+		ret.class_names.push_back(folder.path().filename().generic_u8string());
 	}
 
 	assert(nSamples > 0);
@@ -128,7 +129,7 @@ void computeDistance(const cv::Mat& Y_test, const cv::Mat& Y_train,const std::ve
 TransformationData computeTransformation(const FacialData& facialData)
 {
 	TransformationData ret;
-	const auto& [C, X, classes, X_test, classes_test] = facialData;
+	const auto& [C, X, classes, X_test, classes_test, _] = facialData;
 	auto& [W, Y, Y_test, threshold] = ret;
 
 	//! calculates the class frequency
@@ -363,7 +364,7 @@ int authenticate(const FacialData& facialData, const TransformationData& transfo
 
 void testRecognition(const FacialData& facialData, const TransformationData& transformationData)
 {
-	const auto& [nClasses, X, classes, X_test, classes_test] = facialData;
+	const auto& [nClasses, X, classes, X_test, classes_test, _] = facialData;
 	const auto& [W, Y, Y_test, threshold] = transformationData;
 
 	assert(classes_test.size() == Y_test.cols);
